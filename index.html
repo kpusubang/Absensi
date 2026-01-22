@@ -155,13 +155,14 @@
 						<button class="btn btn-danger" onclick="logout()">Logout</button>
 					</div>
 					<div id="menuAdmin" style="display:none; margin-top:10px">
-  					<hr>
-  						<button class="btn btn-dark w-100" onclick="halamanAdmin()">
+  					
+  						<button class="btn btn-dark" onclick="halamanAdmin()">
     					<i class="bi bi-shield-lock"></i> HALAMAN ADMIN
   						</button>
 					</div>
+					<hr>
 					<div id="prapresensi">
-						<h3>Selamat Datang di Aplikasi Absensi.</h3>
+						<h3>Selamat Datang di Absensi Online.</h3>
 						<p>Silakan pilih fungsi dengan klik tombol.</p>
 					</div>
 					<div id="presensi" style="display:none">
@@ -219,6 +220,102 @@
 		</div>
 		
 	</div>
+
+	<!-- MODAL ADMIN -->
+<div class="modal fade" id="modalAdmin" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-shield-lock"></i> HALAMAN ADMIN
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <div class="d-flex justify-content-between mb-3">
+          <div>
+            Role: <b id="roleAdmin"></b>
+          </div>
+          <button class="btn btn-success btn-sm" onclick="formTambahPegawai()">
+            + Tambah Pegawai
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped">
+            <thead class="table-dark text-center">
+              <tr>
+                <th>NIP</th>
+                <th>Nama</th>
+                <th>Jabatan</th>
+                <th>Role</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tabelPegawai"></tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">
+          Tutup
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalPegawai" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="judulPegawai">Tambah Pegawai</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="modePegawai">
+
+        <div class="mb-2">
+          <label>NIP</label>
+          <input type="text" id="nipPegawai" class="form-control">
+        </div>
+
+        <div class="mb-2">
+          <label>Nama</label>
+          <input type="text" id="namaPegawai" class="form-control">
+        </div>
+
+        <div class="mb-2">
+          <label>Jabatan</label>
+          <input type="text" id="jabatanPegawai" class="form-control">
+        </div>
+
+        <div class="mb-2">
+          <label>Role</label>
+          <select id="rolePegawai" class="form-control">
+            <option value="USER">USER</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-success" onclick="simpanPegawai()">
+          Simpan
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -999,7 +1096,7 @@ function presensiPulang() {
 
 	function halamanAdmin() {
 
-    // Double security (jika dipanggil manual)
+    // 🔐 Proteksi role
     if (localStorage.getItem("role") !== "ADMIN") {
         Swal.fire({
             icon: 'error',
@@ -1009,23 +1106,122 @@ function presensiPulang() {
         return;
     }
 
-    // Sembunyikan menu user
-    $("#prapresensi").hide();
-    $("#presensi").hide();
-    $("#rekap").hide();
+    // Isi role admin di modal
+    $("#roleAdmin").text(localStorage.getItem("role"));
 
-    // Contoh redirect / tampilkan halaman admin
-    Swal.fire({
-        icon: 'success',
-        title: 'Halaman Admin',
-        text: 'Selamat datang di Halaman Admin'
+    // 🔥 TAMPILKAN MODAL ADMIN
+    const modal = new bootstrap.Modal(document.getElementById('modalAdmin'));
+    modal.show();
+
+    // Optional: load data admin
+    loadDataPegawai();
+}
+
+function loadDataPegawai() {
+    $("#tabelPegawai").html(`
+        <tr class="text-center">
+            <td colspan="5">Loading...</td>
+        </tr>
+    `);
+
+    $.getJSON(urlGAS + "?mode=loadpegawai", function(res) {
+        dataPegawai = res;
+        let html = "";
+
+        res.forEach(p => {
+            html += `
+            <tr>
+                <td>${p.nip}</td>
+                <td>${p.nama}</td>
+                <td>${p.jabatan}</td>
+                <td>
+                    <span class="badge bg-${p.role === 'ADMIN' ? 'danger' : 'secondary'}">
+                        ${p.role}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-warning btn-sm"
+                        onclick="editPegawai('${p.nip}')">
+                        Edit
+                    </button>
+                    <button class="btn btn-danger btn-sm"
+                        onclick="hapusPegawai('${p.nip}')">
+                        Hapus
+                    </button>
+                </td>
+            </tr>`;
+        });
+
+        $("#tabelPegawai").html(html);
     });
+}
 
-    // Jika mau pindah halaman:
-    // window.location.href = "admin.html";
+function formTambahPegawai() {
+    $("#judulPegawai").text("Tambah Pegawai");
+    $("#modePegawai").val("tambah");
 
-    // Atau tampilkan div admin
-    $("#halamanAdmin").show();
+    $("#nipPegawai").prop("disabled", false).val("");
+    $("#namaPegawai").val("");
+    $("#jabatanPegawai").val("");
+    $("#rolePegawai").val("USER");
+
+    new bootstrap.Modal("#modalPegawai").show();
+}
+
+function editPegawai(nip) {
+    let p = dataPegawai.find(x => x.nip === nip);
+
+    $("#judulPegawai").text("Edit Pegawai");
+    $("#modePegawai").val("edit");
+
+    $("#nipPegawai").val(p.nip).prop("disabled", true);
+    $("#namaPegawai").val(p.nama);
+    $("#jabatanPegawai").val(p.jabatan);
+    $("#rolePegawai").val(p.role);
+
+    new bootstrap.Modal("#modalPegawai").show();
+}
+
+function simpanPegawai() {
+
+    let mode = $("#modePegawai").val();
+
+    let data = {
+        nip: $("#nipPegawai").val(),
+        nama: $("#namaPegawai").val(),
+        jabatan: $("#jabatanPegawai").val(),
+        role: $("#rolePegawai").val()
+    };
+
+    $.ajax({
+        url: urlGAS + "?mode=" + (mode === "tambah" ? "tambahpegawai" : "editpegawai"),
+        method: "POST",
+        data: data,
+        success: () => {
+            Swal.fire("Berhasil", "Data tersimpan", "success");
+            loadDataPegawai();
+            bootstrap.Modal.getInstance(
+                document.getElementById("modalPegawai")
+            ).hide();
+        }
+    });
+}
+
+function hapusPegawai(nip) {
+    Swal.fire({
+        title: "Hapus Pegawai?",
+        text: "Data tidak dapat dikembalikan",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Ya, Hapus"
+    }).then(res => {
+        if (res.isConfirmed) {
+            $.post(urlGAS + "?mode=hapuspegawai", { nip }, () => {
+                Swal.fire("Terhapus", "Pegawai dihapus", "success");
+                loadDataPegawai();
+            });
+        }
+    });
 }
 
 </script>
