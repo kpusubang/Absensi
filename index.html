@@ -146,7 +146,8 @@
 				<h6 style="position:relative;top: 10px;z-index: 7;text-align:center;"><span class="posisiPetugas"></span></h6>
 				<div id="fotoProfil"></div>
 				<div id="luarRadius" style="border:2px solid red;border-radius:5px;padding:5px;text-align:center;margin-top:50px;display:none">
-					<h2>ANDA BELUM MEMASUKI AREA ABSENSI</h2>
+					<h2>ANDA BELUM MEMASUKI AREA ABSENSI</h2><br>
+					<button class="btn btn-danger" onclick="logout()">Logout</button>
 				</div>
 				<div id="dalamRadius" style="border:2px solid #0d6efd;border-radius:5px;padding:5px;text-align:center;margin-top:50px;display:none">
 					<div style="padding:5px;margin:10px auto;border-bottom:1px solid lightgray;">
@@ -319,6 +320,19 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 
+	function getDeviceId() {
+		let id = localStorage.getItem("device_id");
+
+		if (!id) {
+			id = "DEV-" + crypto.randomUUID();
+			localStorage.setItem("device_id", id);
+		}
+
+		return id;
+	}
+
+
+
     $(document).ready(function() 
 	{
 		if(localStorage.getItem('statuslogin')=='petugas')
@@ -424,7 +438,7 @@
 	fetchServerTime();
 	setInterval(updateClock, 1000);
 	
-	var urlGAS= 'https://script.google.com/macros/s/AKfycbxf2uoEFraGhy-kbRI0bneqD2MUk--FSLf_piYrLafS8pG0xdbf0E-vSRmpXcM424vSAw/exec';
+	var urlGAS= 'https://script.google.com/macros/s/AKfycbxUqkRrMPeww-yzSYaugY9VUsLlpanOzINemQ5tDuHmKIMPtwMJBbnKdQem8FrYtAJT/exec';
     let dataPTK = [];
     let dataLaporan = [];
 	
@@ -612,7 +626,7 @@
 
 		const username = $("#usernamePetugas").val();
 		const password = $("#passwordPetugas").val();
-		//const deviceId = getDeviceId();
+		const deviceId = getDeviceId();
 
 		const ptk = dataPTK.find(item => item.kode === username);
 		const barisData = ptk ? ptk["baris"] : null;
@@ -621,7 +635,7 @@
 		if (barisData !== null) 
 		{
 			$.ajax({
-				url: urlGAS + "?mode=loginptk&user=" + username + "&pass=" + password + "&baris=" + barisData, //+ "&device=" + deviceId,
+				url: urlGAS + "?mode=loginptk" + "&user=" + username + "&pass=" + password + "&baris=" + barisData + "&device=" + deviceId,
 				method: 'GET',
 				dataType: 'json',
 				success: function(response) 
@@ -629,18 +643,18 @@
 					//console.log(response);
 					Swal.close(); // Close loading first
 
-					//if (response.status === "device_denied") {
-  						//Swal.fire({
-    						//icon: "error",
-    						//title: "Akses Ditolak",
-    						//html: `
-      							//Akun ini sudah terdaftar<br>
-      							//di <b>perangkat lain</b><br><br>
-      							//Hubungi Admin untuk reset device
-    							//`
-  							//});
-  							//return;
-					//}
+					if (response.status === "device_denied") {
+  						Swal.fire({
+    						icon: "error",
+    						title: "Akses Ditolak",
+    						html: `
+								Akun ini sudah terdaftar<br>
+      							di <b>perangkat lain</b><br><br>
+      							Hubungi Admin untuk reset device
+    							`
+  							});
+  							return;
+					}
 
 					if (response.status == "success") {
 						// Do something on success
@@ -703,16 +717,30 @@
 		$('.hal').hide();
 	}
 
-	function logout()
-	{
-		localStorage.clear();
+	function logout() {
+
+		// SIMPAN DEVICE ID
+		const deviceId = localStorage.getItem("device_id");
+
+		// BERSIHKAN DATA LOGIN SAJA
+		localStorage.removeItem("statuslogin");
+		localStorage.removeItem("user");
+		localStorage.removeItem("nip");
+		localStorage.removeItem("baris");
+		localStorage.removeItem("posisi");
+		localStorage.removeItem("nama");
+		localStorage.removeItem("foto");
+		localStorage.removeItem("role");
+
 		sessionStorage.clear();
+
+		// KEMBALIKAN DEVICE ID
+		localStorage.setItem("device_id", deviceId);
+
 		$('#lembaga').show();
 		$('.awal').show();
 		$('.hal').hide();
-		$('#prapresensi').show();
-		$('#presensi').hide();
-		$('#rekap').hide();
+
 		firstLoad();
 	}
 
@@ -1330,6 +1358,9 @@ function tombolLibur(ket) {
 function tombolAktif() {
   $("#presensi button").prop("disabled", false);
 }
+
+
+
 
 </script>
 </body>
