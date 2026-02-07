@@ -146,22 +146,19 @@
 				<h6 style="position:relative;top: 10px;z-index: 7;text-align:center;"><span class="posisiPetugas"></span></h6>
 				<div id="fotoProfil"></div>
 				<div id="luarRadius" style="border:2px solid red;border-radius:5px;padding:5px;text-align:center;margin-top:50px;display:none">
-					<h2>ANDA BELUM MEMASUKI AREA ABSENSI</h2><br>
-					<button class="btn btn-danger" onclick="logout()">Logout</button>
+					<h2>ANDA BELUM MEMASUKI AREA ABSENSI</h2>
 				</div>
 				<div id="dalamRadius" style="border:2px solid #0d6efd;border-radius:5px;padding:5px;text-align:center;margin-top:50px;display:none">
-					<div style="padding:10px;margin:10px auto;border-bottom:1px solid lightgray;">
+					<div style="padding:5px;margin:10px auto;border-bottom:1px solid lightgray;">
 						<button class="btn btn-primary" onclick="getPresensi()">Absensi</button>
 						<button class="btn btn-secondary" onclick="rekap()">Rekap</button>
+						<div id="menuAdmin" style="display:none; margin-top:10px">
+  							<button class="btn btn-dark" onclick="halamanAdmin()">
+    						<i class="bi bi-shield-lock"></i>Halaman Admin
+  							</button>
+						</div>
 						<button class="btn btn-danger" onclick="logout()">Logout</button>
 					</div>
-					<div id="menuAdmin" style="display:none; margin-top:10px">
-  					
-  						<button class="btn btn-dark" onclick="halamanAdmin()">
-    					<i class="bi bi-shield-lock"></i> HALAMAN ADMIN
-  						</button>
-					</div>
-					<hr>
 					<div id="prapresensi">
 						<h3>Selamat Datang di Absensi Online.</h3>
 						<p>Silakan pilih fungsi dengan klik tombol.</p>
@@ -321,44 +318,58 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    $(document).ready(function() {
-		if(localStorage.getItem('statuslogin')=='petugas'){
+
+    $(document).ready(function() 
+	{
+		if(localStorage.getItem('statuslogin')=='petugas')
+		{
 			loadHalPTK();
 			$('#halPetugas').show();
-		}else if(localStorage.getItem('statuslogin')=='munfiq'){
+		}else if(localStorage.getItem('statuslogin')=='munfiq')
+		{
 			loadHalPelanggan();
 			$('#halPelanggan').show();
-		}else{
+		}else
+		{
 			firstLoad();
 		}
-        $("#btnPetugas").click(function() {
+        $("#btnPetugas").click(function() 
+		{
             loginPetugas();
         });
-		$("#btnPelanggan").click(function() {
+		$("#btnPelanggan").click(function() 
+		{
             loginMunfiq();
         });
 
         // Form login petugas
-        $("#formPetugas").submit(function(e) {
+        $("#formPetugas").submit(function(e) 
+		{
 			e.preventDefault();
 			logPetugas();
+			loadLibur();
 		});
 		
 		// Form login pelanggan
-        $("#formMunfiq").submit(function(e) {
+        $("#formMunfiq").submit(function(e) 
+		{
 			e.preventDefault();
 			logMunfiq();
 		});
 		
-		$(document).on('click', '.nav-link', function () {
+		$(document).on('click', '.nav-link', function () 
+		{
 			$('.navbar-collapse').collapse('hide');
 		});
     });
 	
+	let dataLibur = [];
 	let serverTimestamp = 0;
     let localStartTime = 0;
-	async function fetchServerTime() {
-		try {
+	async function fetchServerTime() 
+	{
+		try 
+		{
 			let response = await fetch("https://appsekolah.my.id/waktu.php");
 			let data = await response.json();
 
@@ -366,7 +377,8 @@
 			localStartTime = Math.floor(Date.now() / 1000);
 
 			updateClock();
-		} catch (error) {
+		} catch (error) 
+		{
 			console.error("Gagal mengambil waktu dari server", error);
 			document.getElementById("jamdigital").innerText = "Gagal memuat waktu";
 			document.getElementById("date").innerText = "";
@@ -374,7 +386,8 @@
 	}
 
 	// Fungsi untuk memperbarui jam setiap detik dengan waktu yang dihitung di klien
-	function updateClock() {
+	function updateClock() 
+	{
 		let now = Math.floor(Date.now() / 1000);
 		let elapsed = now - localStartTime;
 		let currentTimestamp = serverTimestamp + elapsed;
@@ -387,17 +400,20 @@
 
 		document.getElementById("jamdigital").innerText = `${jam}:${menit}:${detik}`;
 
-		document.getElementById("date").innerText = serverTime.toLocaleDateString("id-ID", { 
+		document.getElementById("date").innerText = serverTime.toLocaleDateString("id-ID", 
+		{ 
 			weekday: 'long', 
 			day: 'numeric', 
 			month: 'long', 
 			year: 'numeric' 
 		});
 		const monthNames = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGU", "SEP", "OKT", "NOV", "DES"];
-		if(sessionStorage.getItem('bulanok') != monthNames[serverTime.getMonth()]){
+		if(sessionStorage.getItem('bulanok') != monthNames[serverTime.getMonth()])
+		{
 			sessionStorage.setItem('bulanok',monthNames[serverTime.getMonth()]);
 		};
-		if(sessionStorage.getItem('tanggalok') != serverTime.getDate()){
+		if(sessionStorage.getItem('tanggalok') != serverTime.getDate())
+		{
 			sessionStorage.setItem('tanggalok',serverTime.getDate());
 		};
 		
@@ -412,7 +428,8 @@
     let dataPTK = [];
     let dataLaporan = [];
 	
-	function firstData(){
+	function firstData()
+	{
 		Swal.fire({
 			title: 'Selamat Datang',
 			text: 'Silakan tunggu...',
@@ -425,7 +442,8 @@
             url: urlGAS + "?mode=load",
             method: 'GET',
             dataType: 'json',
-            success: function(response) {
+            success: function(response) 
+			{
 				//console.log(response);
 				// masukkan data petugas
 				localStorage.setItem('tahun',response[3].Value);
@@ -456,7 +474,8 @@
 					Swal.close();
 				}
             },
-            error: function() {
+            error: function() 
+			{
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
@@ -465,7 +484,9 @@
             }
         });
 	}
-	function firstLoad() {
+
+	function firstLoad() 
+	{
 		Swal.fire({
 			title: 'Selamat Datang',
 			text: 'Silakan tunggu...',
@@ -478,7 +499,8 @@
             url: urlGAS + "?mode=load",
             method: 'GET',
             dataType: 'json',
-            success: function(response) {
+            success: function(response) 
+			{
 				//console.log(response);
 				$('#logo').html('<img src='+cekGambar(response[2].Value)+' style="width:100px"></img>');
 				// masukkan data petugas
@@ -502,7 +524,8 @@
 				$('#lembaga').show();
 				$('#div2').show();
             },
-            error: function() {
+            error: function() 
+			{
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
@@ -513,7 +536,8 @@
     }
 	
 	// Koordinat Presensi
-	function cekJarak(lat1, lon1, lat2, lon2) {
+	function cekJarak(lat1, lon1, lat2, lon2) 
+	{
 		const R = 6371000; // Radius bumi dalam meter
 		const dLat = (lat2 - lat1) * Math.PI / 180;
 		const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -524,8 +548,10 @@
 		return R * c;
 	}
 
-	function cekRadius() {
-		if (!navigator.geolocation) {
+	function cekRadius() 
+	{
+		if (!navigator.geolocation) 
+		{
 			alert("Geolocation tidak didukung di browser Anda.");
 			return;
 		}
@@ -533,7 +559,8 @@
 		const koordinat = localStorage.getItem("koordinat");
 		const radius = parseFloat(localStorage.getItem("radius"));
 		
-		if (!koordinat) {
+		if (!koordinat) 
+		{
 			alert("Koordinat tidak tersedia di LocalStorage.");
 			return;
 		}
@@ -544,10 +571,12 @@
 			const { latitude, longitude } = position.coords;
 			const distance = cekJarak(targetLat, targetLon, latitude, longitude);
 			//alert(targetLat+','+targetLon+' | '+latitude+','+longitude);
-			if (distance >= radius) {
+			if (distance >= radius) 
+			{
 				$('#luarRadius').show();
 				Swal.close();
-			} else {
+			} else 
+			{
 				$('#dalamRadius').show();
 				Swal.close();
 			}
@@ -557,16 +586,21 @@
 	}
 	
     // Fungsi untuk login petugas
-    function loginPetugas() {
+    function loginPetugas() 
+	{
 		$("#div1").hide();
         $("#div2").show();
     }
+
 	// Fungsi untuk login petugas
-    function loginMunfiq() {
+    function loginMunfiq() 
+	{
 		$("#div1").hide();
         $("#div3").show();
     }
-	function logPetugas(){
+
+	function logPetugas()
+	{
 		Swal.fire({
 			title: 'Loading...',
 			text: 'Memeriksa Data',
@@ -578,19 +612,36 @@
 
 		const username = $("#usernamePetugas").val();
 		const password = $("#passwordPetugas").val();
+		const deviceId = getDeviceId();
 
 		const ptk = dataPTK.find(item => item.kode === username);
 		const barisData = ptk ? ptk["baris"] : null;
 		//console.log(ptk);
 		
-		if (barisData !== null) {
+		if (barisData !== null) 
+		{
 			$.ajax({
-				url: urlGAS + "?mode=loginptk&user=" + username + "&pass=" + password + "&baris=" + barisData,
+				url: urlGAS + "?mode=loginptk&user=" + username + "&pass=" + password + "&baris=" + barisData + "&device=" + deviceId,
 				method: 'GET',
 				dataType: 'json',
-				success: function(response) {
+				success: function(response) 
+				{
 					//console.log(response);
 					Swal.close(); // Close loading first
+
+					if (response.status === "device_denied") {
+  						Swal.fire({
+    						icon: "error",
+    						title: "Akses Ditolak",
+    						html: `
+      							Akun ini sudah terdaftar<br>
+      							di <b>perangkat lain</b><br><br>
+      							Hubungi Admin untuk reset device
+    							`
+  							});
+  							return;
+					}
+
 					if (response.status == "success") {
 						// Do something on success
 						Swal.fire({
@@ -619,7 +670,8 @@
 						});
 					}
 				},
-				error: function() {
+				error: function() 
+				{
 					Swal.close(); // Close loading if there is an error
 					Swal.fire({
 						icon: 'error',
@@ -629,10 +681,12 @@
 					});
 				}
 			});
-		} else {
+		} else 
+		{
 			Swal.close(); // Close loading before showing error
 			
-			setTimeout(function() {
+			setTimeout(function() 
+			{
 				Swal.fire({
 					icon: 'error',
 					title: 'Error',
@@ -643,11 +697,14 @@
 		}
 	}
 	
-	function awal(){
+	function awal()
+	{
 		$('.awal').show();
 		$('.hal').hide();
 	}
-	function logout(){
+
+	function logout()
+	{
 		localStorage.clear();
 		sessionStorage.clear();
 		$('#lembaga').show();
@@ -658,7 +715,9 @@
 		$('#rekap').hide();
 		firstLoad();
 	}
-	function loadHalPTK(){
+
+	function loadHalPTK()
+	{
 		$('.namaPetugas').html(localStorage.getItem('nama'));
 		$('.posisiPetugas').html(localStorage.getItem('posisi'));
 		$('.namaLembaga').html(localStorage.getItem('namaLembaga'));
@@ -667,9 +726,11 @@
 			'background-image': 'url(' + cekGambar(localStorage.getItem('foto')) + ')'
 		});
 
-		if (localStorage.getItem("role") === "ADMIN") {
+		if (localStorage.getItem("role") === "ADMIN") 
+		{
   			$("#menuAdmin").show();
-		} else {
+		} else 
+		{
   			$("#menuAdmin").hide();
 		}		
 
@@ -679,7 +740,8 @@
 		$("#halPetugas").show();
 	}
 	
-	function cekGambar(url) {
+	function cekGambar(url) 
+	{
 	  const match = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|docs\.google\.com\/uc\?id=)([-\w]{25,})/);
 
 	  if (match && match[1]) {
@@ -690,7 +752,8 @@
 	  }
 	}
 	
-	function loadHalPelanggan(){
+	function loadHalPelanggan()
+	{
 		$('.namamunfiq').html(localStorage.getItem('nama'));
 		$('.wilayah').html(localStorage.getItem('wilayah'));
 		$('.idmunfiq').html(localStorage.getItem('user'));
@@ -701,12 +764,14 @@
 		$("#halPelanggan").show();
 	}
 
-	function isValidURL(string) {
+	function isValidURL(string) 
+	{
 		const pattern = /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)(:\d+)?(\/.*)?$/i;
 		return pattern.test(string);
 	}
 
-	function getPresensi(){
+	function getPresensi()
+	{
 		Swal.fire({
 			title: 'Absensi',
 			text: 'Memuat Data Absensi...',
@@ -753,173 +818,159 @@
 			}
 		});
 	}
-	//function presensi(mode){
-		//if(mode=="M"){
-			//md = "Masuk";
-			//mde = "jamMasuk";
-			//if($("#jamMasuk").text()=="-"){
-				//stts = "Y";
-			//}else{
-				//stts = "N";
-			//}
-		//}else{
-			//md = "Pulang";
-			//mde = "jamPulang";
-			//if($("#jamPulang").text()=="-"){
-				//stts = "Y";
-			//}else{
-				//stts = "N";
-			//}
-		//}
-		//if(stts=="N"){
-			//Swal.fire({
-				//icon: 'warning',
-				//title: 'Maaf',
-				//text: 'Anda sudah presensi. Tidak bisa diulang.'
-			//});
-		//}else{
-			//Swal.fire({
-				//title: 'Presensi '+md,
-				//text: 'Menyimpan Data ...',
-				//allowOutsideClick: false,
-				//didOpen: () => {
-					//Swal.showLoading();
-				//}
-			//});
-			
-			//okbln = sessionStorage.getItem('bulanok');
-			//oktgl = sessionStorage.getItem('tanggalok');
-			//okwk = $("#jamdigital").text();
-			//okwkt = okwk.split(':').slice(0, 2).join(':');
-			
-			//$.ajax({
-				//url: urlGAS + "?mode=tulispresensi&bulan="+okbln+"&tanggal="+oktgl+"&mp="+mode+"&waktu="+okwkt+"&baris="+localStorage.getItem('baris'),
-				//method: 'GET',
-				//dataType: 'json',
-				//success: function(response) {
-					//console.log(response);
-					//Swal.fire({
-						//icon: 'success',
-						//title: 'Berhasil',
-						//text: 'Berhasil menyimpan'
-					//});
-					
-					//$('#'+mde).text(okwkt);
-				//},
-				//error: function() {
-					//Swal.fire({
-						//icon: 'error',
-						//title: 'Error',
-						//text: 'Gagal memuat data!'
-					//});
-				//}
-			//});
-		//}
-	//}
 	
-	function presensi(mode) {
+	function presensi(mode) 
+	{
+		if (cekHariLibur()) {
+    		Swal.fire({
+      		icon: "info",
+      		title: "Hari Libur",
+      		text: "Absensi tidak dapat dilakukan hari ini"
+    		});
+    		return;
+  		}
 
-    if (mode !== "M") return presensiPulang(); // pisahkan logika pulang
+    	if (mode !== "M") return presensiPulang(); // pisahkan logika pulang
 
-    const jamSekarang = $("#jamdigital").text().substring(0,5); // HH:mm
-    const menitSekarang = timeToMinutes(jamSekarang);
+    	const jamSekarang = $("#jamdigital").text().substring(0,5); // HH:mm
+    	const menitSekarang = timeToMinutes(jamSekarang);
 
-    const batasAwal  = "06:00";
-    const batasAkhir = "08:30";
+    	const batasAwal  = "06:00";
+    	const batasAkhir = "11:59";
 
-    const jamMasukSebelumnya = $("#jamMasuk").text();
+    	const jamMasukSebelumnya = $("#jamMasuk").text();
 
-    // 1️⃣ CEK: SUDAH PERNAH ABSEN MASUK
-    if (jamMasukSebelumnya !== "-") {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Sudah Absen Masuk',
-            html: `
-                Anda sudah pernah melakukan <b>absen masuk</b><br>
-                pada pukul <b>${jamMasukSebelumnya}</b>
-            `
-        });
-        return;
-    }
+    	// 1️⃣ CEK: SUDAH PERNAH ABSEN MASUK
+    	if (jamMasukSebelumnya !== "-") {
+        	Swal.fire({
+            	icon: 'warning',
+            	title: 'Sudah Absen Masuk',
+            	html: `
+                	Anda sudah pernah melakukan <b>absen masuk</b><br>
+                	pada pukul <b>${jamMasukSebelumnya}</b>
+            	`
+       	 	});
+        	return;
+    	}
 
-    // 2️⃣ CEK: BELUM ABSEN TAPI SUDAH LEWAT JAM
-    if (
-        menitSekarang < timeToMinutes(batasAwal) ||
-        menitSekarang > timeToMinutes(batasAkhir)
-    ) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Absen Ditutup',
-            html: `
-                Absen masuk hanya dapat dilakukan<br>
-                pukul <b>${batasAwal}</b> s/d <b>${batasAkhir}</b> WIB
-            `
-        });
-        return;
-    }
+    	// 2️⃣ CEK: BELUM ABSEN TAPI SUDAH LEWAT JAM
+    	if (
+        	menitSekarang < timeToMinutes(batasAwal) ||
+        	menitSekarang > timeToMinutes(batasAkhir)
+    	) {
+        	Swal.fire({
+            	icon: 'error',
+            	title: 'Absen Ditutup',
+            	html: `
+                	Absen masuk hanya dapat dilakukan<br>
+                	mulai pukul <b>${batasAwal}</b> s/d <b>${batasAkhir}</b> WIB
+            	`
+        	});
+        	return;
+    	}
 
-    // 3️⃣ STATUS REALTIME
-    const jamKerja = "08:00";
-    let status = "Tepat Waktu";
+    	// 3️⃣ STATUS REALTIME
+    	const jamKerja = "08:00";
+    	let status = "Tepat Waktu";
 
-    if (menitSekarang > timeToMinutes(jamKerja)) {
-        status = `Terlambat ${menitSekarang - timeToMinutes(jamKerja)} menit`;
-    }
+    	if (menitSekarang > timeToMinutes(jamKerja)) {
+        	status = `Terlambat ${menitSekarang - timeToMinutes(jamKerja)} menit`;
+    	}
 
-    // 4️⃣ SIMPAN
-    simpanPresensiKeServer("M", "jamMasuk", "", status);
-}
+    	// 4️⃣ SIMPAN
+    	simpanPresensiKeServer("M", "jamMasuk", "", status);
+	}
 
-function presensiPulang() {
+	function presensiPulang() 
+	{
 
-    const jamSekarang = $("#jamdigital").text().substring(0,5);
-    const menitSekarang = timeToMinutes(jamSekarang);
+    	const jamSekarang = $("#jamdigital").text().substring(0,5);
+    	const menitSekarang = timeToMinutes(jamSekarang);
+    	
+		const jamMasuk = $("#jamMasuk").text();
+		const jamPulangSebelumnya = $("#jamPulang").text();
 
-    const jamPulangSebelumnya = $("#jamPulang").text();
+		// 🔴 HARUS SUDAH ABSEN MASUK
+    	if (jamMasuk === "-" || !jamMasuk) {
+        	Swal.fire({
+            	icon: 'error',
+            	title: 'Belum Absen Masuk',
+            	text: 'Silakan lakukan absen masuk terlebih dahulu'
+        	});
+        	return;
+    	}
 
-    if (jamPulangSebelumnya !== "-") {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Sudah Absen Pulang',
-            html: `
-                Anda sudah absen pulang<br>
-                pada pukul <b>${jamPulangSebelumnya}</b>
-            `
-        });
-        return;
-    }
+    	// 🔴 CEK SUDAH ABSEN
+    	if (jamPulangSebelumnya !== "-") {
+        	Swal.fire({
+            	icon: 'warning',
+            	title: 'Sudah Absen Pulang',
+            	html: `Anda sudah melakukan absensi pulang<br> 
+				   	   pada pukul <b>${jamPulangSebelumnya}</b> WIB`
+        	});
+        	return;
+    	}
 
-    if (menitSekarang < timeToMinutes("12:00")) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Absen Pulang Ditutup',
-            text: 'Absen pulang hanya bisa dilakukan mulai pukul 12:00 WIB'
-        });
-        return;
-    }
+		// 📅 CEK HARI (0=Minggu, 5=Jumat)
+    	const hari = new Date().getDay();
 
-    Swal.fire({
-        title: 'Uraian Kegiatan',
-        input: 'textarea',
-        showCancelButton: true,
-        confirmButtonText: 'Absen Pulang',
-        inputValidator: v => !v && 'Uraian wajib diisi'
-    }).then(res => {
-        if (res.isConfirmed) {
-            simpanPresensiKeServer("P", "jamPulang", res.value, "Pulang");
-        }
-    });
-}
+    	// ⏰ JAM NORMAL
+    	const batasMasukNormal = timeToMinutes("07:30");
+    	const jamMasukMenit = timeToMinutes(jamMasuk);
 
+    	let jamPulangNormal = timeToMinutes("16:00");
+    	if (hari === 5) { // Jumat
+        	jamPulangNormal = timeToMinutes("16:30");
+    	}
 
-	function timeToMinutes(time) {
+		let jamPulangMinimal = jamPulangNormal;
+
+    	// 🔥 JIKA TERLAMBAT
+    	if (jamMasukMenit > batasMasukNormal) {
+        	const telat = jamMasukMenit - batasMasukNormal;
+        	jamPulangMinimal = jamPulangNormal + telat;
+    	}
+
+    	// 🔴 CEK WAKTU SEKARANG
+    	if (menitSekarang < jamPulangMinimal) {
+        	const jam = Math.floor(jamPulangMinimal / 60).toString().padStart(2,'0');
+        	const menit = (jamPulangMinimal % 60).toString().padStart(2,'0');
+
+        	Swal.fire({
+            	icon: 'error',
+            	title: 'Belum Waktunya Pulang',
+            	html: `
+                	Jam pulang Anda adalah <b>${jam}:${menit}</b><br>
+                	karena jam masuk pukul <b>${jamMasuk}</b>
+            	`
+        	});
+        	return;
+    	}
+
+    	// 🔴 INPUT URAIAN
+    	Swal.fire({
+        	title: 'Uraian Kegiatan',
+        	input: 'textarea',
+        	showCancelButton: true,
+        	confirmButtonText: 'Absen Pulang',
+        	inputValidator: v => !v && 'Uraian wajib diisi'
+    	}).then(res => {
+        	if (res.isConfirmed) {
+            	simpanPresensiKeServer("P", "jamPulang", res.value);
+        	}
+    	});
+	}
+
+	function timeToMinutes(time) 
+	{
 		if (!time || time == "-") return 0;
 			let [hours, minutes] = time.split(":").map(Number);
 			return hours * 60 + minutes;
 	}
 
 	// Fungsi pembantu untuk mengirim data ke Google Apps Script
-	function simpanPresensiKeServer(mode, mde, uraian) {
+	function simpanPresensiKeServer(mode, mde, uraian) 
+	{
 		Swal.fire({
 			title: 'Absensi ' + (mode == "M" ? "Masuk" : "Pulang"),
 			text: 'Menyimpan Data ...',
@@ -959,12 +1010,15 @@ function presensiPulang() {
 		});
 	}
 
-	function rekap(){
+	function rekap()
+	{
 		$('#prapresensi').hide();
 		$('#presensi').hide();
 		$('#rekap').show();
 	}
-	function rekapbulan(){
+
+	function rekapbulan()
+	{
 		if($('#pilihBulan').val()){
 			Swal.fire({
 				title: 'Absensi',
@@ -1084,145 +1138,205 @@ function presensiPulang() {
 			});
 		}
 	}
-	function angkabulan(month) {
+
+	function angkabulan(month) 
+	{
 		let months = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGU", "SEP", "OKT", "NOV", "DES"];
 		let index = months.indexOf(month.toUpperCase());
 		return index !== -1 ? String(index + 1).padStart(2, '0') : "Invalid";
 	}
-	function timeToMinutes(time) {
+
+	function timeToMinutes(time) 
+	{
 		if (!time) return 0;  // Jika kosong, anggap 0
 		let [hours, minutes] = time.split(":").map(Number);
 		return hours * 60 + minutes;
 	}
 
-	function halamanAdmin() {
+	function halamanAdmin() 
+	{
 
-    // 🔐 Proteksi role
-    if (localStorage.getItem("role") !== "ADMIN") {
-        Swal.fire({
-            icon: 'error',
-            title: 'Akses Ditolak',
-            text: 'Anda tidak memiliki hak akses Admin'
-        });
-        return;
-    }
+    	// 🔐 Proteksi role
+    	if (localStorage.getItem("role") !== "ADMIN") {
+        	Swal.fire({
+            	icon: 'error',
+            	title: 'Akses Ditolak',
+            	text: 'Anda tidak memiliki hak akses Admin'
+        	});
+        	return;
+    	}
 
-    // Isi role admin di modal
-    $("#roleAdmin").text(localStorage.getItem("role"));
+    	// Isi role admin di modal
+    	$("#roleAdmin").text(localStorage.getItem("role"));
 
-    // 🔥 TAMPILKAN MODAL ADMIN
-    const modal = new bootstrap.Modal(document.getElementById('modalAdmin'));
-    modal.show();
+    	// 🔥 TAMPILKAN MODAL ADMIN
+    	const modal = new bootstrap.Modal(document.getElementById('modalAdmin'));
+    	modal.show();
 
-    // Optional: load data admin
-    loadDataPegawai();
-}
+    	// Optional: load data admin
+    	loadDataPegawai();
+	}
 
-function loadDataPegawai() {
-    $("#tabelPegawai").html(`
-        <tr class="text-center">
-            <td colspan="5">Loading...</td>
-        </tr>
-    `);
+	function loadDataPegawai() {
+    	$("#tabelPegawai").html(`
+        	<tr class="text-center">
+            	<td colspan="5">Loading...</td>
+        	</tr>
+    	`);
 
-    $.getJSON(urlGAS + "?mode=loadpegawai", function(res) {
-        dataPegawai = res;
-        let html = "";
+    	$.getJSON(urlGAS + "?mode=loadpegawai", function(res) {
+        	dataPegawai = res;
+        	let html = "";
 
-        res.forEach(p => {
-            html += `
-            <tr>
-                <td>${p.nip}</td>
-                <td>${p.nama}</td>
-                <td>${p.jabatan}</td>
-                <td>
-                    <span class="badge bg-${p.role === 'ADMIN' ? 'danger' : 'secondary'}">
+        	res.forEach(p => {
+            	html += `
+            	<tr>
+                	<td>${p.nip}</td>
+                	<td>${p.nama}</td>
+                	<td>${p.jabatan}</td>
+                	<td>
+                    	<span class="badge bg-${p.role === 'ADMIN' ? 'danger' : 'secondary'}">
                         ${p.role}
-                    </span>
-                </td>
-                <td class="text-center">
-                    <button class="btn btn-warning btn-sm"
-                        onclick="editPegawai('${p.nip}')">
-                        Edit
-                    </button>
-                    <button class="btn btn-danger btn-sm"
-                        onclick="hapusPegawai('${p.nip}')">
-                        Hapus
-                    </button>
-                </td>
-            </tr>`;
-        });
+                    	</span>
+                	</td>
+                	<td class="text-center">
+                    	<button class="btn btn-warning btn-sm"
+                        	onclick="editPegawai('${p.nip}')">
+                        	Edit
+                    	</button>
+                    	<button class="btn btn-danger btn-sm"
+                        	onclick="hapusPegawai('${p.nip}')">
+                        	Hapus
+                    	</button>
+                	</td>
+            	</tr>`;
+        	});
 
-        $("#tabelPegawai").html(html);
-    });
+        	$("#tabelPegawai").html(html);
+    	});
+	}
+
+	function formTambahPegawai() 
+	{
+    	$("#judulPegawai").text("Tambah Pegawai");
+    	$("#modePegawai").val("tambah");
+
+    	$("#nipPegawai").prop("disabled", false).val("");
+    	$("#namaPegawai").val("");
+    	$("#jabatanPegawai").val("");
+    	$("#rolePegawai").val("USER");
+
+    	new bootstrap.Modal("#modalPegawai").show();
+	}
+
+	function editPegawai(nip) 
+	{
+    	let p = dataPegawai.find(x => x.nip === nip);
+
+    	$("#judulPegawai").text("Edit Pegawai");
+    	$("#modePegawai").val("edit");
+
+    	$("#nipPegawai").val(p.nip).prop("disabled", true);
+    	$("#namaPegawai").val(p.nama);
+    	$("#jabatanPegawai").val(p.jabatan);
+    	$("#rolePegawai").val(p.role);
+
+    	new bootstrap.Modal("#modalPegawai").show();
+	}
+
+	function simpanPegawai() 
+	{
+
+    	let mode = $("#modePegawai").val();
+
+    	let data = {
+        	nip: $("#nipPegawai").val(),
+        	nama: $("#namaPegawai").val(),
+        	jabatan: $("#jabatanPegawai").val(),
+        	role: $("#rolePegawai").val()
+    	};
+
+    	$.ajax({
+        	url: urlGAS + "?mode=" + (mode === "tambah" ? "tambahpegawai" : "editpegawai"),
+        	method: "POST",
+        	data: data,
+        	success: () => {
+            	Swal.fire("Berhasil", "Data tersimpan", "success");
+            	loadDataPegawai();
+            	bootstrap.Modal.getInstance(
+                	document.getElementById("modalPegawai")
+            	).hide();
+        	}
+    	});
+	}
+
+	function hapusPegawai(nip) {
+    	Swal.fire({
+        	title: "Hapus Pegawai?",
+        	text: "Data tidak dapat dikembalikan",
+        	icon: "warning",
+        	showCancelButton: true,
+        	confirmButtonText: "Ya, Hapus"
+    	}).then(res => {
+        	if (res.isConfirmed) {
+            	$.post(urlGAS + "?mode=hapuspegawai", { nip }, () => {
+                	Swal.fire("Terhapus", "Pegawai dihapus", "success");
+                	loadDataPegawai();
+            	});
+        	}
+    	});
+	}
+
+	function cekHariLibur() {
+  const now = new Date();
+  const hari = now.getDay(); // 0=minggu, 6=sabtu
+  const today = now.toISOString().split("T")[0];
+
+  let keterangan = "";
+
+  // SABTU / MINGGU
+  if (hari === 0 || hari === 6) {
+    keterangan = "LIBUR AKHIR PEKAN";
+  }
+
+  // LIBUR NASIONAL / CUTI BERSAMA
+  const liburNasional = dataLibur.find(l => l.tanggal === today);
+  if (liburNasional) {
+    keterangan = liburNasional.ket.toUpperCase();
+  }
+
+  // JIKA LIBUR
+  if (keterangan !== "") {
+    tombolLibur(keterangan);
+    return true;
+  }
+
+  // JIKA HARI KERJA
+  tombolAktif();
+  return false;
 }
 
-function formTambahPegawai() {
-    $("#judulPegawai").text("Tambah Pegawai");
-    $("#modePegawai").val("tambah");
-
-    $("#nipPegawai").prop("disabled", false).val("");
-    $("#namaPegawai").val("");
-    $("#jabatanPegawai").val("");
-    $("#rolePegawai").val("USER");
-
-    new bootstrap.Modal("#modalPegawai").show();
+function tombolLibur(ket) {
+  $("#presensi button").prop("disabled", true);
+  $("#presensi").html(`
+    <div class="alert alert-info text-center">
+      <h4>${ket}</h4>
+      <p>Tidak ada absensi hari ini</p>
+    </div>
+  `);
 }
 
-function editPegawai(nip) {
-    let p = dataPegawai.find(x => x.nip === nip);
-
-    $("#judulPegawai").text("Edit Pegawai");
-    $("#modePegawai").val("edit");
-
-    $("#nipPegawai").val(p.nip).prop("disabled", true);
-    $("#namaPegawai").val(p.nama);
-    $("#jabatanPegawai").val(p.jabatan);
-    $("#rolePegawai").val(p.role);
-
-    new bootstrap.Modal("#modalPegawai").show();
+function tombolAktif() {
+  $("#presensi button").prop("disabled", false);
 }
 
-function simpanPegawai() {
-
-    let mode = $("#modePegawai").val();
-
-    let data = {
-        nip: $("#nipPegawai").val(),
-        nama: $("#namaPegawai").val(),
-        jabatan: $("#jabatanPegawai").val(),
-        role: $("#rolePegawai").val()
-    };
-
-    $.ajax({
-        url: urlGAS + "?mode=" + (mode === "tambah" ? "tambahpegawai" : "editpegawai"),
-        method: "POST",
-        data: data,
-        success: () => {
-            Swal.fire("Berhasil", "Data tersimpan", "success");
-            loadDataPegawai();
-            bootstrap.Modal.getInstance(
-                document.getElementById("modalPegawai")
-            ).hide();
-        }
-    });
-}
-
-function hapusPegawai(nip) {
-    Swal.fire({
-        title: "Hapus Pegawai?",
-        text: "Data tidak dapat dikembalikan",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Ya, Hapus"
-    }).then(res => {
-        if (res.isConfirmed) {
-            $.post(urlGAS + "?mode=hapuspegawai", { nip }, () => {
-                Swal.fire("Terhapus", "Pegawai dihapus", "success");
-                loadDataPegawai();
-            });
-        }
-    });
+function getDeviceId() {
+  let deviceId = localStorage.getItem("device_id");
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    localStorage.setItem("device_id", deviceId);
+  }
+  return deviceId;
 }
 
 </script>
