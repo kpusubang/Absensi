@@ -612,7 +612,7 @@
 
 		const username = $("#usernamePetugas").val();
 		const password = $("#passwordPetugas").val();
-		const deviceId = getDeviceId();
+		//const deviceId = getDeviceId();
 
 		const ptk = dataPTK.find(item => item.kode === username);
 		const barisData = ptk ? ptk["baris"] : null;
@@ -621,7 +621,7 @@
 		if (barisData !== null) 
 		{
 			$.ajax({
-				url: urlGAS + "?mode=loginptk&user=" + username + "&pass=" + password + "&baris=" + barisData + "&device=" + deviceId,
+				url: urlGAS + "?mode=loginptk&user=" + username + "&pass=" + password + "&baris=" + barisData, //+ "&device=" + deviceId,
 				method: 'GET',
 				dataType: 'json',
 				success: function(response) 
@@ -629,18 +629,18 @@
 					//console.log(response);
 					Swal.close(); // Close loading first
 
-					if (response.status === "device_denied") {
-  						Swal.fire({
-    						icon: "error",
-    						title: "Akses Ditolak",
-    						html: `
-      							Akun ini sudah terdaftar<br>
-      							di <b>perangkat lain</b><br><br>
-      							Hubungi Admin untuk reset device
-    							`
-  							});
-  							return;
-					}
+					//if (response.status === "device_denied") {
+  						//Swal.fire({
+    						//icon: "error",
+    						//title: "Akses Ditolak",
+    						//html: `
+      							//Akun ini sudah terdaftar<br>
+      							//di <b>perangkat lain</b><br><br>
+      							//Hubungi Admin untuk reset device
+    							//`
+  							//});
+  							//return;
+					//}
 
 					if (response.status == "success") {
 						// Do something on success
@@ -836,7 +836,7 @@
     	const menitSekarang = timeToMinutes(jamSekarang);
 
     	const batasAwal  = "06:00";
-    	const batasAkhir = "11:59";
+    	const batasAkhir = "10:00";
 
     	const jamMasukSebelumnya = $("#jamMasuk").text();
 
@@ -961,12 +961,13 @@
     	});
 	}
 
-	function timeToMinutes(time) 
-	{
-		if (!time || time == "-") return 0;
-			let [hours, minutes] = time.split(":").map(Number);
-			return hours * 60 + minutes;
-	}
+	//function timeToMinutes(time) 
+	//{
+		//if (!time || time == "-") return 0;
+			//let [hours, minutes] = time.split(":").map(Number);
+			//return hours * 60 + minutes;
+	//}
+
 
 	// Fungsi pembantu untuk mengirim data ke Google Apps Script
 	function simpanPresensiKeServer(mode, mde, uraian) 
@@ -1328,15 +1329,6 @@ function tombolLibur(ket) {
 
 function tombolAktif() {
   $("#presensi button").prop("disabled", false);
-}
-
-function getDeviceId() {
-  let deviceId = localStorage.getItem("device_id");
-  if (!deviceId) {
-    deviceId = crypto.randomUUID();
-    localStorage.setItem("device_id", deviceId);
-  }
-  return deviceId;
 }
 
 </script>
