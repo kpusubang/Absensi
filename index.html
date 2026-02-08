@@ -643,6 +643,15 @@
 					//console.log(response);
 					Swal.close(); // Close loading first
 
+					if (response.status === "device_used") {
+						Swal.fire({
+							icon: "error",
+							title: "Perangkat Ditolak",
+							text: "Perangkat ini sudah digunakan akun lain"
+						});
+						return;
+					}
+					
 					if (response.status === "device_denied") {
   						Swal.fire({
     						icon: "error",
