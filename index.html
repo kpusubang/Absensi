@@ -562,41 +562,103 @@
 		return R * c;
 	}
 
+	//function cekRadius() 
+	//{
+		//if (!navigator.geolocation) 
+		//{
+			//alert("Geolocation tidak didukung di browser Anda.");
+			//return;
+		//}
+		
+		//const koordinat = localStorage.getItem("koordinat");
+		//const radius = parseFloat(localStorage.getItem("radius"));
+		
+		//if (!koordinat) 
+		//{
+			//alert("Koordinat tidak tersedia di LocalStorage.");
+			//return;
+		//}
+		
+		//const [targetLat, targetLon] = koordinat.split(",").map(Number);
+		
+		//navigator.geolocation.getCurrentPosition(position => {
+			//const { latitude, longitude } = position.coords;
+			//const distance = cekJarak(targetLat, targetLon, latitude, longitude);
+			///alert(targetLat+','+targetLon+' | '+latitude+','+longitude);
+			//if (distance >= radius) 
+			//{
+				//$('#luarRadius').show();
+				//Swal.close();
+			//} else 
+			//{
+				//$('#dalamRadius').show();
+				//Swal.close();
+			//}
+		//}, () => {
+			//alert("Gagal mendapatkan lokasi Anda.");
+		//});
+	//}
+
 	function cekRadius() 
 	{
-		if (!navigator.geolocation) 
-		{
-			alert("Geolocation tidak didukung di browser Anda.");
-			return;
-		}
-		
-		const koordinat = localStorage.getItem("koordinat");
-		const radius = parseFloat(localStorage.getItem("radius"));
-		
-		if (!koordinat) 
-		{
-			alert("Koordinat tidak tersedia di LocalStorage.");
-			return;
-		}
-		
-		const [targetLat, targetLon] = koordinat.split(",").map(Number);
-		
-		navigator.geolocation.getCurrentPosition(position => {
-			const { latitude, longitude } = position.coords;
-			const distance = cekJarak(targetLat, targetLon, latitude, longitude);
-			//alert(targetLat+','+targetLon+' | '+latitude+','+longitude);
-			if (distance >= radius) 
-			{
-				$('#luarRadius').show();
-				Swal.close();
-			} else 
-			{
-				$('#dalamRadius').show();
-				Swal.close();
-			}
-		}, () => {
-			alert("Gagal mendapatkan lokasi Anda.");
-		});
+    	const hari = new Date().getDay(); // 0=Minggu, 5=Jumat
+
+    	// ===============================
+    	// ✅ KHUSUS HARI JUMAT
+    	// GPS & RADIUS DINONAKTIFKAN TOTAL
+    	// ===============================
+    	if (hari === 5) {
+        	console.log("Hari Jumat - GPS Dinonaktifkan");
+
+        	$('#luarRadius').hide();
+        	$('#dalamRadius').show();
+
+        	Swal.close();
+        	return; // STOP di sini, tidak cek GPS
+    	}
+
+    	// ===============================
+    	// 🔵 HARI SELAIN JUMAT → NORMAL
+    	// ===============================
+    	if (!navigator.geolocation) 
+    	{
+        	alert("Geolocation tidak didukung di browser Anda.");
+        	Swal.close();
+        	return;
+    	}
+    
+    	const koordinat = localStorage.getItem("koordinat");
+    	const radius = parseFloat(localStorage.getItem("radius"));
+    
+    	if (!koordinat) 
+    	{
+        	alert("Koordinat tidak tersedia.");
+        	Swal.close();
+        	return;
+    	}
+    
+    	const [targetLat, targetLon] = koordinat.split(",").map(Number);
+    
+    	navigator.geolocation.getCurrentPosition(position => {
+        	const { latitude, longitude } = position.coords;
+        	const distance = cekJarak(targetLat, targetLon, latitude, longitude);
+
+        	if (distance >= radius) 
+        	{
+            	$('#luarRadius').show();
+            	$('#dalamRadius').hide();
+        	} 
+        	else 
+        	{
+            	$('#dalamRadius').show();
+            	$('#luarRadius').hide();
+        	}
+
+        	Swal.close();
+    	}, () => {
+        	alert("Gagal mendapatkan lokasi Anda.");
+        	Swal.close();
+    	});
 	}
 	
     // Fungsi untuk login petugas
