@@ -377,6 +377,9 @@
 		});
     });
 	
+	let ramadhanMulai = null;
+	let ramadhanSelesai = null;
+	
 	let dataLibur = [];
 	let serverTimestamp = 0;
     let localStartTime = 0;
@@ -479,7 +482,8 @@
 				bulan.forEach((namaBulan, index) => {
 					sessionStorage.setItem(`jamKerja${namaBulan}`, bag[index] || "");
 				});
-				
+
+				loadRamadhan();
 				//Swal.close();
 				if(localStorage.getItem('gps')=="YA"){
 					cekRadius();
@@ -980,16 +984,95 @@
     	simpanPresensiKeServer("M", "jamMasuk", "", status);
 	}
 
-	function presensiPulang() 
-	{
+	//function presensiPulang() 
+	//{
 
-    	const jamSekarang = $("#jamdigital").text().substring(0,5);
-    	const menitSekarang = timeToMinutes(jamSekarang);
+    	//const jamSekarang = $("#jamdigital").text().substring(0,5);
+    	//const menitSekarang = timeToMinutes(jamSekarang);
     	
-		const jamMasuk = $("#jamMasuk").text();
-		const jamPulangSebelumnya = $("#jamPulang").text();
+		//const jamMasuk = $("#jamMasuk").text();
+		//const jamPulangSebelumnya = $("#jamPulang").text();
 
 		// 🔴 HARUS SUDAH ABSEN MASUK
+    	//if (jamMasuk === "-" || !jamMasuk) {
+        	//Swal.fire({
+            	//icon: 'error',
+            	//title: 'Belum Absen Masuk',
+            	//text: 'Silakan lakukan absen masuk terlebih dahulu'
+        	//});
+        	//return;
+    	//}
+
+    	// 🔴 CEK SUDAH ABSEN
+    	//if (jamPulangSebelumnya !== "-") {
+        	//Swal.fire({
+            	//icon: 'warning',
+            	//title: 'Sudah Absen Pulang',
+            	//html: `Anda sudah melakukan absensi pulang<br> 
+				   	   //pada pukul <b>${jamPulangSebelumnya}</b> WIB`
+        	//});
+        	//return;
+    	//}
+
+		// 📅 CEK HARI (0=Minggu, 5=Jumat)
+    	//const hari = new Date().getDay();
+
+    	// ⏰ JAM NORMAL
+    	//const batasMasukNormal = timeToMinutes("07:30");
+    	//const jamMasukMenit = timeToMinutes(jamMasuk);
+
+    	//let jamPulangNormal = timeToMinutes("16:00");
+    	//if (hari === 5) { // Jumat
+        	//jamPulangNormal = timeToMinutes("16:30");
+    	//}
+
+		//let jamPulangMinimal = jamPulangNormal;
+
+    	// 🔥 JIKA TERLAMBAT
+    	//if (jamMasukMenit > batasMasukNormal) {
+        	//const telat = jamMasukMenit - batasMasukNormal;
+        	//jamPulangMinimal = jamPulangNormal + telat;
+    	//}
+
+    	// 🔴 CEK WAKTU SEKARANG
+    	//if (menitSekarang < jamPulangMinimal) {
+        	//const jam = Math.floor(jamPulangMinimal / 60).toString().padStart(2,'0');
+        	//const menit = (jamPulangMinimal % 60).toString().padStart(2,'0');
+
+        	//Swal.fire({
+            	//icon: 'error',
+            	//title: 'Belum Waktunya Pulang',
+            	//html: `
+                	//Jam pulang Anda adalah <b>${jam}:${menit}</b><br>
+                	//karena jam masuk pukul <b>${jamMasuk}</b>
+            	//`
+        	//});
+        	//return;
+    	//}
+
+    	// 🔴 INPUT URAIAN
+    	//Swal.fire({
+        	//title: 'Uraian Kegiatan',
+        	//input: 'textarea',
+        	//showCancelButton: true,
+        	//confirmButtonText: 'Absen Pulang',
+        	//inputValidator: v => !v && 'Uraian wajib diisi'
+    	//}).then(res => {
+        	//if (res.isConfirmed) {
+            	//simpanPresensiKeServer("P", "jamPulang", res.value);
+        	//}
+    	//});
+	//}
+
+	function presensiPulang() 
+	{
+    	const jamSekarang = $("#jamdigital").text().substring(0,5);
+    	const menitSekarang = timeToMinutes(jamSekarang);
+
+    	const jamMasuk = $("#jamMasuk").text();
+    	const jamPulangSebelumnya = $("#jamPulang").text();
+
+    	// 🔴 HARUS SUDAH ABSEN MASUK
     	if (jamMasuk === "-" || !jamMasuk) {
         	Swal.fire({
             	icon: 'error',
@@ -999,39 +1082,65 @@
         	return;
     	}
 
-    	// 🔴 CEK SUDAH ABSEN
+    	// 🔴 CEK SUDAH ABSEN PULANG
     	if (jamPulangSebelumnya !== "-") {
         	Swal.fire({
             	icon: 'warning',
             	title: 'Sudah Absen Pulang',
-            	html: `Anda sudah melakukan absensi pulang<br> 
-				   	   pada pukul <b>${jamPulangSebelumnya}</b> WIB`
+            	html: `Anda sudah melakukan absensi pulang<br>
+                   	pada pukul <b>${jamPulangSebelumnya}</b> WIB`
         	});
         	return;
     	}
 
-		// 📅 CEK HARI (0=Minggu, 5=Jumat)
-    	const hari = new Date().getDay();
-
-    	// ⏰ JAM NORMAL
-    	const batasMasukNormal = timeToMinutes("07:30");
+    	const hari = new Date().getDay(); // 5 = Jumat
     	const jamMasukMenit = timeToMinutes(jamMasuk);
+    	const batasMasukNormal = timeToMinutes("07:30");
 
-    	let jamPulangNormal = timeToMinutes("16:00");
-    	if (hari === 5) { // Jumat
-        	jamPulangNormal = timeToMinutes("16:30");
+    	let jamPulangMinimal;
+    	let tambahKeterlambatan = false;
+
+    	// ================================
+    	// 🕌 MODE RAMADHAN
+    	// ================================
+    	if (isRamadhan()) {
+
+        	if (hari === 5) { 
+            	// Jumat Ramadhan
+            	jamPulangMinimal = timeToMinutes("15:30");
+        	} else {
+            	// Senin–Kamis Ramadhan
+            	jamPulangMinimal = timeToMinutes("15:00");
+        	}
+
+        	tambahKeterlambatan = false; // ❌ TIDAK ADA TAMBAHAN JAM
+
+    	} 
+    	// ================================
+    	// 📅 MODE NORMAL
+    	// ================================
+    	else {
+
+        	if (hari === 5) {
+            	jamPulangMinimal = timeToMinutes("16:30"); // Jumat
+        	} else {
+            	jamPulangMinimal = timeToMinutes("16:00"); // Senin–Kamis
+        	}
+
+        	tambahKeterlambatan = true; // ✅ ADA TAMBAHAN JAM
+
+        	// 🔥 Tambahkan keterlambatan jika masuk lewat 07:30
+        	if (jamMasukMenit > batasMasukNormal) {
+            	const telat = jamMasukMenit - batasMasukNormal;
+            	jamPulangMinimal += telat;
+        	}
     	}
 
-		let jamPulangMinimal = jamPulangNormal;
-
-    	// 🔥 JIKA TERLAMBAT
-    	if (jamMasukMenit > batasMasukNormal) {
-        	const telat = jamMasukMenit - batasMasukNormal;
-        	jamPulangMinimal = jamPulangNormal + telat;
-    	}
-
-    	// 🔴 CEK WAKTU SEKARANG
+    	// ================================
+    	// 🔴 CEK BELUM WAKTUNYA
+    	// ================================
     	if (menitSekarang < jamPulangMinimal) {
+
         	const jam = Math.floor(jamPulangMinimal / 60).toString().padStart(2,'0');
         	const menit = (jamPulangMinimal % 60).toString().padStart(2,'0');
 
@@ -1040,13 +1149,15 @@
             	title: 'Belum Waktunya Pulang',
             	html: `
                 	Jam pulang Anda adalah <b>${jam}:${menit}</b><br>
-                	karena jam masuk pukul <b>${jamMasuk}</b>
+                	${tambahKeterlambatan ? `Karena jam masuk pukul <b>${jamMasuk}</b>` : `(Jam Ramadhan)`}
             	`
         	});
         	return;
     	}
 
-    	// 🔴 INPUT URAIAN
+    	// ================================
+    	// INPUT URAIAN
+    	// ================================
     	Swal.fire({
         	title: 'Uraian Kegiatan',
         	input: 'textarea',
@@ -1388,48 +1499,64 @@
 	}
 
 	function cekHariLibur() {
-  const now = new Date();
-  const hari = now.getDay(); // 0=minggu, 6=sabtu
-  const today = now.toISOString().split("T")[0];
+  		const now = new Date();
+  		const hari = now.getDay(); // 0=minggu, 6=sabtu
+ 		 const today = now.toISOString().split("T")[0];
 
-  let keterangan = "";
+  		let keterangan = "";
 
-  // SABTU / MINGGU
-  if (hari === 0 || hari === 6) {
-    keterangan = "LIBUR AKHIR PEKAN";
-  }
+  		// SABTU / MINGGU
+  		if (hari === 0 || hari === 6) {
+    		keterangan = "LIBUR AKHIR PEKAN";
+ 		 }
 
-  // LIBUR NASIONAL / CUTI BERSAMA
-  const liburNasional = dataLibur.find(l => l.tanggal === today);
-  if (liburNasional) {
-    keterangan = liburNasional.ket.toUpperCase();
-  }
+ 		 // LIBUR NASIONAL / CUTI BERSAMA
+ 		 const liburNasional = dataLibur.find(l => l.tanggal === today);
+  		if (liburNasional) {
+    		keterangan = liburNasional.ket.toUpperCase();
+  		}
 
-  // JIKA LIBUR
-  if (keterangan !== "") {
-    tombolLibur(keterangan);
-    return true;
-  }
+  		// JIKA LIBUR
+  		if (keterangan !== "") {
+    		tombolLibur(keterangan);
+   			return true;
+  		}
 
-  // JIKA HARI KERJA
-  tombolAktif();
-  return false;
-}
+  		// JIKA HARI KERJA
+  		tombolAktif();
+  		return false;
+	}
 
-function tombolLibur(ket) {
-  $("#presensi button").prop("disabled", true);
-  $("#presensi").html(`
-    <div class="alert alert-info text-center">
-      <h4>${ket}</h4>
-      <p>Tidak ada absensi hari ini</p>
-    </div>
-  `);
-}
+	function tombolLibur(ket) {
+  		$("#presensi button").prop("disabled", true);
+  		$("#presensi").html(`
+    		<div class="alert alert-info text-center">
+     		 	<h4>${ket}</h4>
+      			<p>Tidak ada absensi hari ini</p>
+    		</div>
+  		`);
+	}
 
-function tombolAktif() {
-  $("#presensi button").prop("disabled", false);
-}
+	function tombolAktif() {
+  		$("#presensi button").prop("disabled", false);
+	}
 
+	function loadRamadhan() {
+  		$.getJSON(urlGAS + "?mode=getramadhan", function(res) {
+    		if (res.data) {
+      			ramadhanMulai = res.data.mulai;
+      			ramadhanSelesai = res.data.selesai;
+    		}
+  		});
+	}
+
+	function isRamadhan() {
+  		if (!ramadhanMulai || !ramadhanSelesai) return false;
+
+  		const today = new Date().toISOString().split("T")[0];
+
+  		return (today >= ramadhanMulai && today <= ramadhanSelesai);
+	}
 </script>
 </body>
 </html>
