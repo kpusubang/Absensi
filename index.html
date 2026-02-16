@@ -484,13 +484,13 @@
 				});
 
 				loadRamadhan();
-				//Swal.close();
-				if(localStorage.getItem('gps')=="YA"){
-					cekRadius();
-				}else{
+				///Swal.close();
+				//if(localStorage.getItem('gps')=="YA"){
+					//cekRadius();
+				//}else{
 					$('#dalamRadius').show();
 					Swal.close();
-				}
+				//}
             },
             error: function() 
 			{
@@ -525,7 +525,7 @@
 				localStorage.setItem('tahun',response[3].Value);
 				localStorage.setItem('gps',response[4].Value);
 				localStorage.setItem('koordinat',response[5].Value);
-				localStorage.setItem('koordinat',response[6].Value);
+				localStorage.setItem('radius',response[6].Value);
 				const ptgs = response[7].Value;
 
 				ptgs.split('#').forEach(item => {
@@ -566,104 +566,66 @@
 		return R * c;
 	}
 
-	function cekRadius() 
-	{
-		if (!navigator.geolocation) 
-		{
-			alert("Geolocation tidak didukung di browser Anda.");
-			return;
-		}
-		
-		const koordinat = localStorage.getItem("koordinat");
-		const radius = parseFloat(localStorage.getItem("radius"));
-		
-		if (!koordinat) 
-		{
-			alert("Koordinat tidak tersedia di LocalStorage.");
-			return;
-		}
-		
-		const [targetLat, targetLon] = koordinat.split(",").map(Number);
-		
-		navigator.geolocation.getCurrentPosition(position => {
-			const { latitude, longitude } = position.coords;
-			const distance = cekJarak(targetLat, targetLon, latitude, longitude);
-			///alert(targetLat+','+targetLon+' | '+latitude+','+longitude);
-			if (distance >= radius) 
-			{
-				$('#luarRadius').show();
-				Swal.close();
-			} else 
-			{
-				$('#dalamRadius').show();
-				Swal.close();
+	function cekRadius() {
+		return new Promise((resolve) => {
+
+			if (localStorage.getItem("gps") !== "YA") {
+				resolve(true);
+				return;
 			}
-		}, () => {
-			alert("Gagal mendapatkan lokasi Anda.");
+
+			if (!navigator.geolocation) {
+				Swal.fire("Error", "Geolocation tidak didukung browser", "error");
+				resolve(false);
+				return;
+			}
+
+			const koordinat = localStorage.getItem("koordinat");
+			const radius = parseFloat(localStorage.getItem("radius"));
+
+			if (!koordinat || !radius) {
+				Swal.fire("Error", "Koordinat atau radius belum diatur", "error");
+				resolve(false);
+				return;
+			}
+
+			const [targetLat, targetLon] = koordinat.split(",").map(Number);
+
+			Swal.fire({
+				title: "Memeriksa Lokasi...",
+				text: "Pastikan GPS aktif & tidak menggunakan Fake GPS",
+				allowOutsideClick: false,
+				didOpen: () => Swal.showLoading()
+			});
+
+			navigator.geolocation.getCurrentPosition(position => {
+
+				const { latitude, longitude } = position.coords;
+				const distance = cekJarak(targetLat, targetLon, latitude, longitude);
+
+				Swal.close();
+
+				if (distance > radius) {
+					Swal.fire({
+						icon: "error",
+						//title: "Di Luar Area Absensi",
+						html: `Tidak Boleh Absen Diluar Kantor,<br>
+						Silahkan Absen Dilokasi Kantor Anda.<br>
+						Jarak Anda : <b>${Math.round(distance)} meter</b>`
+					});
+					resolve(false);
+				} else {
+					resolve(true);
+				}
+
+			}, () => {
+				Swal.close();
+				Swal.fire("Error", "Gagal mendapatkan lokasi", "error");
+				resolve(false);
+			});
+
 		});
 	}
-
-	//function cekRadius() 
-	//{
-    	//const hari = new Date().getDay(); // 0=Minggu, 5=Jumat
-
-    	// ===============================
-    	// ✅ KHUSUS HARI JUMAT
-    	// GPS & RADIUS DINONAKTIFKAN TOTAL
-    	// ===============================
-    	//if (hari === 5) {
-        	//console.log("Hari Jumat - GPS Dinonaktifkan");
-
-        	//$('#luarRadius').hide();
-        	//$('#dalamRadius').show();
-
-        	//Swal.close();
-        	//return; // STOP di sini, tidak cek GPS
-    	//}
-
-    	// ===============================
-    	// 🔵 HARI SELAIN JUMAT → NORMAL
-    	// ===============================
-    	//if (!navigator.geolocation) 
-    	//{
-        	//alert("Geolocation tidak didukung di browser Anda.");
-        	//Swal.close();
-        	//return;
-    	//}
-    
-    	//const koordinat = localStorage.getItem("koordinat");
-    	//const radius = parseFloat(localStorage.getItem("radius"));
-    
-    	//if (!koordinat) 
-    	//{
-        	//alert("Koordinat tidak tersedia.");
-        	//Swal.close();
-        	//return;
-    	//}
-    
-    	//const [targetLat, targetLon] = koordinat.split(",").map(Number);
-    
-    	//navigator.geolocation.getCurrentPosition(position => {
-        	//const { latitude, longitude } = position.coords;
-        	//const distance = cekJarak(targetLat, targetLon, latitude, longitude);
-
-        	//if (distance >= radius) 
-        	//{
-            	//$('#luarRadius').show();
-            	//$('#dalamRadius').hide();
-        	//} 
-        	//else 
-        	//{
-            	//$('#dalamRadius').show();
-            	//$('#luarRadius').hide();
-        	//}
-
-        	//Swal.close();
-    	//}, () => {
-        	//alert("Gagal mendapatkan lokasi Anda.");
-        	//Swal.close();
-    	//});
-	//}
 	
     // Fungsi untuk login petugas
     function loginPetugas() 
@@ -924,6 +886,10 @@
 	
 	function presensi(mode) 
 	{
+		// 🔒 CEK GPS TERLEBIH DAHULU
+		const lolosRadius = await cekRadius();
+		if (!lolosRadius) return;
+		
 		if (cekHariLibur()) {
     		Swal.fire({
       		icon: "info",
@@ -984,85 +950,6 @@
     	simpanPresensiKeServer("M", "jamMasuk", "", status);
 	}
 
-	//function presensiPulang() 
-	//{
-
-    	//const jamSekarang = $("#jamdigital").text().substring(0,5);
-    	//const menitSekarang = timeToMinutes(jamSekarang);
-    	
-		//const jamMasuk = $("#jamMasuk").text();
-		//const jamPulangSebelumnya = $("#jamPulang").text();
-
-		// 🔴 HARUS SUDAH ABSEN MASUK
-    	//if (jamMasuk === "-" || !jamMasuk) {
-        	//Swal.fire({
-            	//icon: 'error',
-            	//title: 'Belum Absen Masuk',
-            	//text: 'Silakan lakukan absen masuk terlebih dahulu'
-        	//});
-        	//return;
-    	//}
-
-    	// 🔴 CEK SUDAH ABSEN
-    	//if (jamPulangSebelumnya !== "-") {
-        	//Swal.fire({
-            	//icon: 'warning',
-            	//title: 'Sudah Absen Pulang',
-            	//html: `Anda sudah melakukan absensi pulang<br> 
-				   	   //pada pukul <b>${jamPulangSebelumnya}</b> WIB`
-        	//});
-        	//return;
-    	//}
-
-		// 📅 CEK HARI (0=Minggu, 5=Jumat)
-    	//const hari = new Date().getDay();
-
-    	// ⏰ JAM NORMAL
-    	//const batasMasukNormal = timeToMinutes("07:30");
-    	//const jamMasukMenit = timeToMinutes(jamMasuk);
-
-    	//let jamPulangNormal = timeToMinutes("16:00");
-    	//if (hari === 5) { // Jumat
-        	//jamPulangNormal = timeToMinutes("16:30");
-    	//}
-
-		//let jamPulangMinimal = jamPulangNormal;
-
-    	// 🔥 JIKA TERLAMBAT
-    	//if (jamMasukMenit > batasMasukNormal) {
-        	//const telat = jamMasukMenit - batasMasukNormal;
-        	//jamPulangMinimal = jamPulangNormal + telat;
-    	//}
-
-    	// 🔴 CEK WAKTU SEKARANG
-    	//if (menitSekarang < jamPulangMinimal) {
-        	//const jam = Math.floor(jamPulangMinimal / 60).toString().padStart(2,'0');
-        	//const menit = (jamPulangMinimal % 60).toString().padStart(2,'0');
-
-        	//Swal.fire({
-            	//icon: 'error',
-            	//title: 'Belum Waktunya Pulang',
-            	//html: `
-                	//Jam pulang Anda adalah <b>${jam}:${menit}</b><br>
-                	//karena jam masuk pukul <b>${jamMasuk}</b>
-            	//`
-        	//});
-        	//return;
-    	//}
-
-    	// 🔴 INPUT URAIAN
-    	//Swal.fire({
-        	//title: 'Uraian Kegiatan',
-        	//input: 'textarea',
-        	//showCancelButton: true,
-        	//confirmButtonText: 'Absen Pulang',
-        	//inputValidator: v => !v && 'Uraian wajib diisi'
-    	//}).then(res => {
-        	//if (res.isConfirmed) {
-            	//simpanPresensiKeServer("P", "jamPulang", res.value);
-        	//}
-    	//});
-	//}
 
 	function presensiPulang() 
 	{
@@ -1156,27 +1043,42 @@
     	}
 
     	// ================================
-    	// INPUT URAIAN
-    	// ================================
-    	Swal.fire({
-        	title: 'Uraian Kegiatan',
-        	input: 'textarea',
-        	showCancelButton: true,
-        	confirmButtonText: 'Absen Pulang',
-        	inputValidator: v => !v && 'Uraian wajib diisi'
-    	}).then(res => {
-        	if (res.isConfirmed) {
-            	simpanPresensiKeServer("P", "jamPulang", res.value);
-        	}
-    	});
-	}
+		// INPUT URAIAN (VERSI FINAL VALID)
+		// ================================
+		Swal.fire({
+			title: 'Uraian Kegiatan',
+			input: 'textarea',
+			showCancelButton: true,
+			confirmButtonText: 'Absen Pulang',
+			inputPlaceholder: 'Tuliskan uraian kegiatan...',
+			inputValidator: (value) => {
 
-	//function timeToMinutes(time) 
-	//{
-		//if (!time || time == "-") return 0;
-			//let [hours, minutes] = time.split(":").map(Number);
-			//return hours * 60 + minutes;
-	//}
+				if (!value) {
+					return 'Uraian wajib diisi';
+				}
+
+				const clean = value.trim();
+
+				if (clean.length < 5) {
+					return 'Uraian minimal 5 karakter';
+				} 
+				
+				if (/^-+$/.test(clean)) {
+					return 'Uraian tidak boleh hanya tanda "-"';
+				}
+
+				if (!/[a-zA-Z]/.test(clean)) {
+					return 'Uraian harus mengandung huruf';
+				}
+
+				return null; // valid
+			}
+		}).then((res) => {
+			if (res.isConfirmed) {
+				simpanPresensiKeServer("P", "jamPulang", res.value.trim());
+			}
+		});
+	}
 
 
 	// Fungsi pembantu untuk mengirim data ke Google Apps Script
