@@ -331,6 +331,25 @@
 		return id;
 	}
 
+	// ===============================
+	// 🔥 WAKTU SERVER WIB (ANTI MANIPULASI)
+	// ===============================
+	function getServerDateWIB() {
+    	let now = Math.floor(Date.now() / 1000);
+    	let elapsed = now - localStartTime;
+    	let currentTimestamp = serverTimestamp + elapsed;
+
+    	let d = new Date(currentTimestamp * 1000);
+
+    	return {
+        	full: d,
+        	iso: d.toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" }), // yyyy-mm-dd
+        	day: d.getDay(), // 0=minggu
+        	year: d.getFullYear(),
+        	month: d.getMonth(),
+        	date: d.getDate()
+    	};
+	}
 
 
     $(document).ready(function() 
@@ -1247,7 +1266,7 @@
 						//tbody.appendChild(row);
 						let dateObj = new Date(year, month - 1, day);
     					let hariIndex = dateObj.getDay(); // 0=minggu
-					    let isoDate = dateObj.toISOString().split("T")[0];
+					    let isoDate = dateObj.toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
 					
 					    let hari = dateObj.toLocaleDateString("id-ID", { weekday: 'long' });
 					
@@ -1291,7 +1310,7 @@
 					
 					    let liburNasional = dataLibur.find(l => l.tanggal === isoDate);
 					    if (liburNasional) {
-					        keteranganLibur = liburNasional.ket.toUpperCase();
+					        keteranganLibur = liburNasional.ket;
 					    }
 					
 					    if (keteranganLibur !== "") {
@@ -1516,41 +1535,45 @@
 
 	function cekHariLibur() {
 
-    	const now = new Date();
-    	const hari = now.getDay(); // 0=minggu, 6=sabtu
-    	const today = now.toISOString().split("T")[0];
+    const now = getServerDateWIB();
+    const hari = now.day;
+    const today = now.iso;
 
-    	let keterangan = "";
+    let keterangan = "";
 
-    	// 🔹 Sabtu / Minggu
-    	if (hari === 0) {
-        	keterangan = "LIBUR HARI MINGGU";
-    	} 
-    	else if (hari === 6) {
-        	keterangan = "LIBUR HARI SABTU";
-    	}
+    // 🔹 Sabtu / Minggu
+    if (hari === 0) {
+        keterangan = "LIBUR HARI MINGGU";
+    } 
+    else if (hari === 6) {
+        keterangan = "LIBUR HARI SABTU";
+    }
 
-    	// 🔹 Libur Nasional
-    	const liburNasional = dataLibur.find(l => l.tanggal === today);
-    	if (liburNasional) {
-        	keterangan = liburNasional.ket.toUpperCase();
-    	}
+    // 🔹 Libur Nasional dari Sheet
+    const liburNasional = dataLibur.find(l => l.tanggal === today);
+    if (liburNasional) {
+        keterangan = liburNasional.ket.toUpperCase();
+    }
 
-    	// 🔴 Jika Libur
-    	if (keterangan !== "") {
-        	Swal.fire({
-            	icon: "info",
-            	title: "Hari Libur",
-            	html: `
-                	<h4>${keterangan}</h4>
-                	<p>Tidak ada absensi hari ini</p>
-            	`
-        	});
-        	return true;
-    	}
+    if (keterangan !== "") {
 
-    	return false;
-	}
+        tombolLibur(keterangan);
+
+        Swal.fire({
+            icon: "info",
+            title: "Hari Libur",
+            html: `
+                <h4>${keterangan}</h4>
+                <p>Tidak ada absensi hari ini</p>
+            `
+        });
+
+        return true;
+    }
+
+    tombolAktif();
+    return false;
+}
 
 
 	function tombolLibur(ket) {
@@ -1585,12 +1608,14 @@
 	}
 
 	function isRamadhan() {
-  		if (!ramadhanMulai || !ramadhanSelesai) return false;
 
-  		const today = new Date().toISOString().split("T")[0];
+    if (!ramadhanMulai || !ramadhanSelesai) return false;
 
-  		return (today >= ramadhanMulai && today <= ramadhanSelesai);
-	}
+    const today = getServerDateWIB().iso;
+
+    return (today >= ramadhanMulai && today <= ramadhanSelesai);
+}
+
 </script>
 </body>
 </html>
