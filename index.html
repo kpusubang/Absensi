@@ -711,6 +711,8 @@
 						localStorage.setItem('role', response.role);
 						
 						loadHalPTK();
+						loadLibur();
+
 					} else {
 						// Show error if login fails
 						Swal.fire({
@@ -835,54 +837,105 @@
 		return pattern.test(string);
 	}
 
+	//function getPresensi()
+	//{
+		//Swal.fire({
+			//title: 'Absensi',
+			//text: 'Memuat Data Absensi...',
+			//allowOutsideClick: false,
+			//didOpen: () => {
+				//Swal.showLoading();
+			//}
+		//});
+		
+		//okbln = sessionStorage.getItem('bulanok');
+		//oktgl = sessionStorage.getItem('tanggalok')
+		
+		//$.ajax({
+			//url: urlGAS + "?mode=loadpresensi&bulan="+okbln+"&baris="+localStorage.getItem('baris'),
+			//method: 'GET',
+			//dataType: 'json',
+			//success: function(response) {
+				////console.log(response);
+				////console.log(response[okbln]["Kolom1"]);
+				//Swal.fire({
+					//icon: 'info',
+					//title: 'Siap',
+					//text: 'Silakan Melakukan Absensi'
+				//});
+				//get jamMasuk
+				//ma = (parseFloat(oktgl) - 1) * 2 + 4;  
+				//pu = ma + 1;
+				//jamas = response[okbln]["Kolom"+ma];
+				//if(jamas==""){jamas="-"};
+				//japul = response[okbln]["Kolom"+pu];
+				//if(japul==""){japul="-"};
+				//$("#jamMasuk").html(jamas);
+				//$("#jamPulang").html(japul);
+				//$("#prapresensi").hide();
+				//$("#rekap").hide();
+				//$("#presensi").show();
+			//},
+			//error: function() {
+				//Swal.fire({
+					//icon: 'error',
+					//title: 'Error',
+					//text: 'Gagal memuat data!'
+				//});
+			//}
+		//});
+	//}
+
 	function getPresensi()
 	{
-		Swal.fire({
-			title: 'Absensi',
-			text: 'Memuat Data Absensi...',
-			allowOutsideClick: false,
-			didOpen: () => {
-				Swal.showLoading();
-			}
-		});
-		
-		okbln = sessionStorage.getItem('bulanok');
-		oktgl = sessionStorage.getItem('tanggalok')
-		
-		$.ajax({
-			url: urlGAS + "?mode=loadpresensi&bulan="+okbln+"&baris="+localStorage.getItem('baris'),
-			method: 'GET',
-			dataType: 'json',
-			success: function(response) {
-				//console.log(response);
-				//console.log(response[okbln]["Kolom1"]);
-				Swal.fire({
-					icon: 'info',
-					title: 'Siap',
-					text: 'Silakan Melakukan Absensi'
-				});
-				//get jamMasuk
-				ma = (parseFloat(oktgl) - 1) * 2 + 4;  
-				pu = ma + 1;
-				jamas = response[okbln]["Kolom"+ma];
-				if(jamas==""){jamas="-"};
-				japul = response[okbln]["Kolom"+pu];
-				if(japul==""){japul="-"};
-				$("#jamMasuk").html(jamas);
-				$("#jamPulang").html(japul);
-				$("#prapresensi").hide();
-				$("#rekap").hide();
-				$("#presensi").show();
-			},
-			error: function() {
-				Swal.fire({
-					icon: 'error',
-					title: 'Error',
-					text: 'Gagal memuat data!'
-				});
-			}
-		});
+    	// 🔴 CEK HARI LIBUR SAAT KLIK ABSENSI
+    	if (cekHariLibur()) {
+        	return;
+    	}
+
+    	Swal.fire({
+        	title: 'Absensi',
+        	text: 'Memuat Data Absensi...',
+        	allowOutsideClick: false,
+        	didOpen: () => {
+            	Swal.showLoading();
+        	}
+    	});
+    
+    	okbln = sessionStorage.getItem('bulanok');
+    	oktgl = sessionStorage.getItem('tanggalok')
+    
+    	$.ajax({
+        	url: urlGAS + "?mode=loadpresensi&bulan="+okbln+"&baris="+localStorage.getItem('baris'),
+        	method: 'GET',
+        	dataType: 'json',
+        	success: function(response) {
+
+            	Swal.close();
+
+            	ma = (parseFloat(oktgl) - 1) * 2 + 4;  
+            	pu = ma + 1;
+
+            	jamas = response[okbln]["Kolom"+ma] || "-";
+            	japul = response[okbln]["Kolom"+pu] || "-";
+
+            	$("#jamMasuk").html(jamas);
+            	$("#jamPulang").html(japul);
+
+            	$("#prapresensi").hide();
+            	$("#rekap").hide();
+            	$("#presensi").show();
+        	},
+        	error: function() {
+            	Swal.fire({
+                	icon: 'error',
+                	title: 'Error',
+                	text: 'Gagal memuat data!'
+            	});
+        	}
+    	});
 	}
+
 	
 	async function presensi(mode) 
 	{
@@ -890,14 +943,14 @@
 		const lolosRadius = await cekRadius();
 		if (!lolosRadius) return;
 		
-		if (cekHariLibur()) {
-    		Swal.fire({
-      		icon: "info",
-      		title: "Hari Libur",
-      		text: "Absensi tidak dapat dilakukan hari ini"
-    		});
-    		return;
-  		}
+		//if (cekHariLibur()) {
+    		//Swal.fire({
+      		//icon: "info",
+      		//title: "Hari Libur",
+      		//text: "Absensi tidak dapat dilakukan hari ini"
+    		//});
+    		//return;
+  		//}
 
     	if (mode !== "M") return presensiPulang(); // pisahkan logika pulang
 
@@ -1163,35 +1216,96 @@
 					//console.log('Bulan '+month);
 
 					for (let day = 1; day <= lastDay; day++) {
-						let date = new Date(year, month - 1, day);
+						//let date = new Date(year, month - 1, day);
 						
 						// Format hari dalam bahasa Indonesia
-						let hari = date.toLocaleDateString("id-ID", { weekday: 'long' });
+						//let hari = date.toLocaleDateString("id-ID", { weekday: 'long' });
 
 						// Buat baris tabel
-						let row = document.createElement("tr");
+						//let row = document.createElement("tr");
 						
-						let day2 = String(day).padStart(2, '0');
-						omM = (day - 1) * 2 + 4;  
-						omP = omM + 1;
-						let kolomM = `Kolom${omM}`;
-						let kolomP = `Kolom${omP}`;
-						//console.log(kolomM);
-						//console.log(kolomP);
+						//let day2 = String(day).padStart(2, '0');
+						//omM = (day - 1) * 2 + 4;  
+						//omP = omM + 1;
+						//let kolomM = `Kolom${omM}`;
+						//let kolomP = `Kolom${omP}`;
+						////console.log(kolomM);
+						////console.log(kolomP);
 						// Kolom 1: Hari dan Tanggal
-						let col1 = document.createElement("td");col1.innerHTML = hari+'<br/>'+day2+'-'+month+'-'+year;col1.classList.add("tengah");
-						let col2 = document.createElement("td");col2.id=`m-${day}`;col2.textContent = response[okbln][kolomM];col2.classList.add("tengah");
-						let col3 = document.createElement("td");col3.id=`p-${day}`;col3.textContent = response[okbln][kolomP];col3.classList.add("tengah");
-						let col4 = document.createElement("td");col4.id=`ket-${day}`;col4.textContent = "";col4.classList.add("tengah");
+						//let col1 = document.createElement("td");col1.innerHTML = hari+'<br/>'+day2+'-'+month+'-'+year;col1.classList.add("tengah");
+						//let col2 = document.createElement("td");col2.id=`m-${day}`;col2.textContent = response[okbln][kolomM];col2.classList.add("tengah");
+						//let col3 = document.createElement("td");col3.id=`p-${day}`;col3.textContent = response[okbln][kolomP];col3.classList.add("tengah");
+						//let col4 = document.createElement("td");col4.id=`ket-${day}`;col4.textContent = "";col4.classList.add("tengah");
 
 						// Tambahkan kolom ke dalam baris
-						row.appendChild(col1);
-						row.appendChild(col2);
-						row.appendChild(col3);
-						row.appendChild(col4);
+						//row.appendChild(col1);
+						//row.appendChild(col2);
+						//row.appendChild(col3);
+						//row.appendChild(col4);
 
 						// Tambahkan baris ke dalam tabel
-						tbody.appendChild(row);
+						//tbody.appendChild(row);
+						let dateObj = new Date(year, month - 1, day);
+    					let hariIndex = dateObj.getDay(); // 0=minggu
+					    let isoDate = dateObj.toISOString().split("T")[0];
+					
+					    let hari = dateObj.toLocaleDateString("id-ID", { weekday: 'long' });
+					
+					    let row = document.createElement("tr");
+					
+					    let day2 = String(day).padStart(2, '0');
+					    let omM = (day - 1) * 2 + 4;  
+					    let omP = omM + 1;
+					
+					    let kolomM = `Kolom${omM}`;
+					    let kolomP = `Kolom${omP}`;
+					
+					    let masukVal = response[okbln][kolomM] || "";
+					    let pulangVal = response[okbln][kolomP] || "";
+					
+					    let col1 = document.createElement("td");
+					    col1.innerHTML = hari+'<br/>'+day2+'-'+month+'-'+year;
+					    col1.classList.add("tengah");
+					
+					    let col2 = document.createElement("td");
+					    col2.textContent = masukVal;
+					    col2.classList.add("tengah");
+					
+					    let col3 = document.createElement("td");
+					    col3.textContent = pulangVal;
+					    col3.classList.add("tengah");
+					
+					    let col4 = document.createElement("td");
+					    col4.classList.add("tengah");
+					
+					    // =========================
+					    // 🔴 CEK HARI LIBUR
+					    // =========================
+					    let keteranganLibur = "";
+					
+					    if (hariIndex === 0) {
+					        keteranganLibur = "LIBUR MINGGU";
+					    } else if (hariIndex === 6) {
+					        keteranganLibur = "LIBUR SABTU";
+					    }
+					
+					    let liburNasional = dataLibur.find(l => l.tanggal === isoDate);
+					    if (liburNasional) {
+					        keteranganLibur = liburNasional.ket.toUpperCase();
+					    }
+					
+					    if (keteranganLibur !== "") {
+					
+					        row.style.backgroundColor = "#ffe6e6"; // 🔴 merah muda
+					        col4.innerHTML = `<span style="color:red;font-weight:bold">${keteranganLibur}</span>`;
+					    }
+					
+					    row.appendChild(col1);
+					    row.appendChild(col2);
+					    row.appendChild(col3);
+					    row.appendChild(col4);
+					
+					    tbody.appendChild(row);
 					}
 					// hitung jam kerja
 					jamKerjaOK = sessionStorage.getItem('jamKerja'+okbln);
@@ -1401,33 +1515,43 @@
 	}
 
 	function cekHariLibur() {
-  		const now = new Date();
-  		const hari = now.getDay(); // 0=minggu, 6=sabtu
- 		 const today = now.toISOString().split("T")[0];
 
-  		let keterangan = "";
+    	const now = new Date();
+    	const hari = now.getDay(); // 0=minggu, 6=sabtu
+    	const today = now.toISOString().split("T")[0];
 
-  		// SABTU / MINGGU
-  		if (hari === 0 || hari === 6) {
-    		keterangan = "LIBUR AKHIR PEKAN";
- 		 }
+    	let keterangan = "";
 
- 		 // LIBUR NASIONAL / CUTI BERSAMA
- 		 const liburNasional = dataLibur.find(l => l.tanggal === today);
-  		if (liburNasional) {
-    		keterangan = liburNasional.ket.toUpperCase();
-  		}
+    	// 🔹 Sabtu / Minggu
+    	if (hari === 0) {
+        	keterangan = "LIBUR HARI MINGGU";
+    	} 
+    	else if (hari === 6) {
+        	keterangan = "LIBUR HARI SABTU";
+    	}
 
-  		// JIKA LIBUR
-  		if (keterangan !== "") {
-    		tombolLibur(keterangan);
-   			return true;
-  		}
+    	// 🔹 Libur Nasional
+    	const liburNasional = dataLibur.find(l => l.tanggal === today);
+    	if (liburNasional) {
+        	keterangan = liburNasional.ket.toUpperCase();
+    	}
 
-  		// JIKA HARI KERJA
-  		tombolAktif();
-  		return false;
+    	// 🔴 Jika Libur
+    	if (keterangan !== "") {
+        	Swal.fire({
+            	icon: "info",
+            	title: "Hari Libur",
+            	html: `
+                	<h4>${keterangan}</h4>
+                	<p>Tidak ada absensi hari ini</p>
+            	`
+        	});
+        	return true;
+    	}
+
+    	return false;
 	}
+
 
 	function tombolLibur(ket) {
   		$("#presensi button").prop("disabled", true);
@@ -1450,6 +1574,14 @@
       			ramadhanSelesai = res.data.selesai;
     		}
   		});
+	}
+
+	function loadLibur() {
+    	$.getJSON(urlGAS + "?mode=getlibur", function(res) {
+        	if (res.status === "success") {
+            	dataLibur = res.libur || [];
+        	}
+    	});
 	}
 
 	function isRamadhan() {
