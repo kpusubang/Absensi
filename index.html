@@ -1284,9 +1284,9 @@
 					    let keteranganLibur = "";
 					
 					    if (hariIndex === 0) {
-					        keteranganLibur = "LIBUR MINGGU";
+					        keteranganLibur = "Libur Minggu";
 					    } else if (hariIndex === 6) {
-					        keteranganLibur = "LIBUR SABTU";
+					        keteranganLibur = "Libur Sabtu";
 					    }
 					
 					    let liburNasional = dataLibur.find(l => l.tanggal === isoDate);
@@ -1297,7 +1297,7 @@
 					    if (keteranganLibur !== "") {
 					
 					        row.style.backgroundColor = "#ffe6e6"; // 🔴 merah muda
-					        col4.innerHTML = `<span style="color:red;font-weight:bold">${keteranganLibur}</span>`;
+					        col4.innerHTML = `<span style="color:red">${keteranganLibur}</span>`;
 					    }
 					
 					    row.appendChild(col1);
