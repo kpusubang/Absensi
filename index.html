@@ -206,6 +206,7 @@
 									<th>Hari / Tanggal</th>
 									<th>Masuk</th>
 									<th>Pulang</th>
+									<th style="width:35%">Uraian Kegiatan</th>
 									<th>Keterangan</th>
 								</tr>
 							</thead>
@@ -1202,39 +1203,39 @@
 		$('#rekap').show();
 	}
 
-	function rekapbulan()
-	{
-		if($('#pilihBulan').val()){
-			Swal.fire({
-				title: 'Absensi',
-				text: 'Memuat Rekap...',
-				allowOutsideClick: false,
-				didOpen: () => {
-					Swal.showLoading();
-				}
-			});
+	//function rekapbulan()
+	//{
+		//if($('#pilihBulan').val()){
+			//Swal.fire({
+				//title: 'Absensi',
+				//text: 'Memuat Rekap...',
+				//allowOutsideClick: false,
+				//didOpen: () => {
+					//Swal.showLoading();
+				//}
+			//});
 			
-			okbln = $('#pilihBulan').val();
-			okthn = localStorage.getItem('tahun');
+			//okbln = $('#pilihBulan').val();
+			//okthn = localStorage.getItem('tahun');
 			
-			$.ajax({
-				url: urlGAS + "?mode=loadpresensi&bulan="+okbln+"&baris="+localStorage.getItem('baris'),
-				method: 'GET',
-				dataType: 'json',
-				success: function(response) {
-					//console.log(response);
-					//console.log(response[okbln]["Kolom1"]);
+			//$.ajax({
+				//url: urlGAS + "?mode=loadpresensi&bulan="+okbln+"&baris="+localStorage.getItem('baris'),
+				//method: 'GET',
+				//dataType: 'json',
+				//success: function(response) {
+					////console.log(response);
+					////console.log(response[okbln]["Kolom1"]);
 					
-					let tbody = document.getElementById("tabelRekapBody");
-					tbody.innerHTML = "";
+					//let tbody = document.getElementById("tabelRekapBody");
+					//tbody.innerHTML = "";
 
-					let year = okthn;
-					let month = angkabulan(okbln);
-					let lastDay = new Date(year, month, 0).getDate();
-					//console.log('Tahun '+year);
-					//console.log('Bulan '+month);
+					//let year = okthn;
+					//let month = angkabulan(okbln);
+					//let lastDay = new Date(year, month, 0).getDate();
+					////console.log('Tahun '+year);
+					////console.log('Bulan '+month);
 
-					for (let day = 1; day <= lastDay; day++) {
+					//for (let day = 1; day <= lastDay; day++) {
 						//let date = new Date(year, month - 1, day);
 						
 						// Format hari dalam bahasa Indonesia
@@ -1264,69 +1265,223 @@
 
 						// Tambahkan baris ke dalam tabel
 						//tbody.appendChild(row);
-						let dateObj = new Date(year, month - 1, day);
-    					let hariIndex = dateObj.getDay(); // 0=minggu
-					    let isoDate = dateObj.toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
+						//let dateObj = new Date(year, month - 1, day);
+    					//let hariIndex = dateObj.getDay(); // 0=minggu
+					    //let isoDate = dateObj.toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
 					
-					    let hari = dateObj.toLocaleDateString("id-ID", { weekday: 'long' });
+					    //let hari = dateObj.toLocaleDateString("id-ID", { weekday: 'long' });
 					
-					    let row = document.createElement("tr");
+					    //let row = document.createElement("tr");
 					
-					    let day2 = String(day).padStart(2, '0');
-					    let omM = (day - 1) * 2 + 4;  
-					    let omP = omM + 1;
+					    //let day2 = String(day).padStart(2, '0');
+					    //let omM = (day - 1) * 2 + 4;  
+					    //let omP = omM + 1;
 					
-					    let kolomM = `Kolom${omM}`;
-					    let kolomP = `Kolom${omP}`;
+					    //let kolomM = `Kolom${omM}`;
+					    //let kolomP = `Kolom${omP}`;
 					
-					    let masukVal = response[okbln][kolomM] || "";
-					    let pulangVal = response[okbln][kolomP] || "";
+					    //let masukVal = response[okbln][kolomM] || "";
+					    //let pulangVal = response[okbln][kolomP] || "";
 					
-					    let col1 = document.createElement("td");
-					    col1.innerHTML = hari+'<br/>'+day2+'-'+month+'-'+year;
-					    col1.classList.add("tengah");
+					    //let col1 = document.createElement("td");
+					    //col1.innerHTML = hari+'<br/>'+day2+'-'+month+'-'+year;
+					    //col1.classList.add("tengah");
 					
-					    let col2 = document.createElement("td");
-					    col2.textContent = masukVal;
-					    col2.classList.add("tengah");
+					    //let col2 = document.createElement("td");
+					   // col2.textContent = masukVal;
+					    //col2.classList.add("tengah");
 					
-					    let col3 = document.createElement("td");
-					    col3.textContent = pulangVal;
-					    col3.classList.add("tengah");
+					    //let col3 = document.createElement("td");
+					   // col3.textContent = pulangVal;
+					   // col3.classList.add("tengah");
 					
-					    let col4 = document.createElement("td");
-					    col4.classList.add("tengah");
+					    //let col4 = document.createElement("td");
+					    //col4.classList.add("tengah");
 					
 					    // =========================
 					    // 🔴 CEK HARI LIBUR
 					    // =========================
-					    let keteranganLibur = "";
+					    //let keteranganLibur = "";
 					
-					    if (hariIndex === 0) {
-					        keteranganLibur = "Libur Minggu";
-					    } else if (hariIndex === 6) {
-					        keteranganLibur = "Libur Sabtu";
-					    }
+					    //if (hariIndex === 0) {
+					       // keteranganLibur = "Libur Minggu";
+					    //} else if (hariIndex === 6) {
+					        //keteranganLibur = "Libur Sabtu";
+					   // }
 					
-					    let liburNasional = dataLibur.find(l => l.tanggal === isoDate);
-					    if (liburNasional) {
-					        keteranganLibur = liburNasional.ket;
-					    }
+					    //let liburNasional = dataLibur.find(l => l.tanggal === isoDate);
+					    //if (liburNasional) {
+					        //keteranganLibur = liburNasional.ket;
+					   // }
 					
-					    if (keteranganLibur !== "") {
+					    //if (keteranganLibur !== "") {
 					
-					        row.style.backgroundColor = "#ffe6e6"; // 🔴 merah muda
-					        col4.innerHTML = `<span style="color:red">${keteranganLibur}</span>`;
-					    }
+					        //row.style.backgroundColor = "#ffe6e6"; // 🔴 merah muda
+					        //col4.innerHTML = `<span style="color:red">${keteranganLibur}</span>`;
+					    //}
 					
-					    row.appendChild(col1);
-					    row.appendChild(col2);
-					    row.appendChild(col3);
-					    row.appendChild(col4);
+					    //row.appendChild(col1);
+					    //row.appendChild(col2);
+					    //row.appendChild(col3);
+					    //row.appendChild(col4);
 					
-					    tbody.appendChild(row);
-					}
+					    //tbody.appendChild(row);
+					//}
 					// hitung jam kerja
+					//jamKerjaOK = sessionStorage.getItem('jamKerja'+okbln);
+					//jamKerjaBulanIni = jamKerjaOK.split(';');
+					
+					////console.log(jamKerjaBulanIni);
+					//for (let i = 0; i < lastDay; i++) {
+						//let idx = i + 1;
+						//let mElement = document.getElementById(`m-${idx}`);
+						//let pElement = document.getElementById(`p-${idx}`);
+
+						//if (mElement) {
+							//let pM = mElement.textContent.trim();
+							////console.log(i+" "+pM);
+							////console.log(i+" jk "+jamKerjaBulanIni[i * 2]);
+							//if(pM.length > 0){
+								//if(timeToMinutes(pM) > timeToMinutes(jamKerjaBulanIni[i * 2])){
+									//brp = timeToMinutes(pM) - timeToMinutes(jamKerjaBulanIni[i * 2]);
+									//$("#ket-"+idx).append('<div style="color:red">Datang Telat '+brp+' Menit</div>');
+								//}else{
+									//$("#ket-"+idx).append('<div style="color:green">Datang Sesuai</div>');
+								//}
+							//}
+						//}
+						//if (pElement) {
+							//pP = pElement.textContent.trim();
+							////console.log(i+" "+pP);
+							////console.log(i+" jk "+jamKerjaBulanIni[i * 2 + 1]);
+							//if(pP.length > 0){
+								//if(timeToMinutes(pP) < timeToMinutes(jamKerjaBulanIni[i * 2 + 1])){
+									//brp = timeToMinutes(jamKerjaBulanIni[i * 2 + 1]) - timeToMinutes(pP);
+									//$("#ket-"+idx).append('<div style="color:red">Pulang Cepat '+brp+' Menit</div>');
+								//}else{
+									//$("#ket-"+idx).append('<div style="color:green">Pulang Sesuai</div>');
+								//}
+							//}
+						//}
+					//}
+
+					
+					//Swal.close();
+					//$('#divTabelRekap').show();
+				//},
+				//error: function() {
+					//Swal.fire({
+						//icon: 'error',
+						//title: 'Error',
+						//text: 'Gagal memuat data!'
+					//});
+				//}
+			//});
+		//}else{
+			//Swal.fire({
+				//icon: 'error',
+				//title: 'Error',
+				//text: 'Pilih bulan terlebih dahulu!'
+			//});
+		//}
+	//}
+
+	function rekapbulan()
+	{
+		if($('#pilihBulan').val()){
+			Swal.fire({
+				title: 'Absensi',
+				text: 'Memuat Rekap...',
+				allowOutsideClick: false,
+				didOpen: () => {
+					Swal.showLoading();
+				}
+			});
+			
+			okbln = $('#pilihBulan').val();
+			okthn = localStorage.getItem('tahun');
+			
+			$.when(
+    			$.getJSON(urlGAS + "?mode=loadpresensi&bulan="+okbln+"&baris="+localStorage.getItem('baris')),
+    			$.getJSON(urlGAS + "?mode=geturaian&bulan="+okbln+"&nip="+localStorage.getItem('nip'))
+				).done(function(presensiRes, uraianRes){
+
+    				let response = presensiRes[0];
+    				let dataUraian = uraianRes[0] || {};
+
+    				let tbody = document.getElementById("tabelRekapBody");
+    				tbody.innerHTML = "";
+
+					let year = okthn;
+					let month = angkabulan(okbln);
+					let lastDay = new Date(year, month, 0).getDate();
+
+					console.log(dataUraian);
+
+					for (let day = 1; day <= lastDay; day++) {
+
+						let dateObj = new Date(year, month - 1, day);
+						let hari = dateObj.toLocaleDateString("id-ID", { weekday: 'long' });
+						let hariIndex = dateObj.getDay();
+						let isoDate = dateObj.toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
+
+						let row = document.createElement("tr");
+
+						let day2 = String(day).padStart(2, '0');
+						let omM = (day - 1) * 2 + 4;  
+						let omP = omM + 1;
+
+						let kolomM = `Kolom${omM}`;
+						let kolomP = `Kolom${omP}`;
+
+						let masukVal = response[okbln][kolomM] || "";
+						let pulangVal = response[okbln][kolomP] || "";
+
+						let uraianVal = dataUraian[day] || "";
+
+						// =========================
+						// Buat Kolom
+						// =========================
+						let col1 = document.createElement("td");
+						col1.innerHTML = hari+'<br/>'+day2+'-'+month+'-'+year;
+						col1.classList.add("tengah");
+
+						let col2 = document.createElement("td");
+						col2.textContent = masukVal;
+						col2.classList.add("tengah");
+
+						let col3 = document.createElement("td");
+						col3.textContent = pulangVal;
+						col3.classList.add("tengah");
+
+						let col4 = document.createElement("td");
+						col4.innerHTML = uraianVal ? 
+							`<div style="text-align:left">${uraianVal}</div>` : "";
+						col4.style.textAlign = "left";
+
+						let col5 = document.createElement("td");
+						col5.id=`ket-${day}`;
+						col5.textContent = "";
+						col5.classList.add("tengah");
+
+
+						// =========================
+						// CEK LIBUR
+						// =========================
+						let keteranganLibur = "";
+
+						if (hariIndex === 0) keteranganLibur = "Libur Minggu";
+						if (hariIndex === 6) keteranganLibur = "Libur Sabtu";
+
+						let liburNasional = dataLibur.find(l => l.tanggal === isoDate);
+						if (liburNasional) keteranganLibur = liburNasional.ket;
+
+						if (keteranganLibur !== "") {
+							row.style.backgroundColor = "#ffe6e6";
+							col5.innerHTML = `<span style="color:red">${keteranganLibur}</span>`;
+						}
+
+						// hitung jam kerja
 					jamKerjaOK = sessionStorage.getItem('jamKerja'+okbln);
 					jamKerjaBulanIni = jamKerjaOK.split(';');
 					
@@ -1364,18 +1519,28 @@
 						}
 					}
 
+						row.appendChild(col1);
+						row.appendChild(col2);
+						row.appendChild(col3);
+						row.appendChild(col4);
+						row.appendChild(col5);
+
+						tbody.appendChild(row);
+					}
+					
+
 					
 					Swal.close();
 					$('#divTabelRekap').show();
-				},
-				error: function() {
-					Swal.fire({
-						icon: 'error',
-						title: 'Error',
-						text: 'Gagal memuat data!'
-					});
-				}
-			});
+				});
+				//error: function() {
+					//Swal.fire({
+						//icon: 'error',
+						//title: 'Error',
+						//text: 'Gagal memuat data!'
+					//});
+				//}
+			//});
 		}else{
 			Swal.fire({
 				icon: 'error',
