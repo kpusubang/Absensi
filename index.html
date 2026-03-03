@@ -407,18 +407,40 @@
 	{
 		try 
 		{
-			let response = await fetch("https://appsekolah.my.id/waktu.php");
+			//let response = await fetch("https://appsekolah.my.id/waktu.php");
+			let response = await fetch(urlGAS + "?mode=gettime");
 			let data = await response.json();
+			
+			if (data.status === "success") {
 
-			serverTimestamp = data.timestamp;
-			localStartTime = Math.floor(Date.now() / 1000);
+				serverTimestamp = data.timestamp;
+				localStartTime = Math.floor(Date.now() / 1000);
+			
+				console.log("Waktu server dari GAS aktif");
+			
+			} else {
+				throw new Error("Status gagal");
+			}
 
-			updateClock();
+			//updateClock();
 		} catch (error) 
 		{
 			console.error("Gagal mengambil waktu dari server", error);
-			document.getElementById("jamdigital").innerText = "Gagal memuat waktu";
-			document.getElementById("date").innerText = "";
+			
+			// 🔥 Fallback ke WIB lokal
+			const now = new Date();
+			serverTimestamp = Math.floor(
+				new Date(
+					now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+				).getTime() / 1000
+			);
+			
+			localStartTime = Math.floor(Date.now() / 1000);
+			
+			console.warn("Menggunakan waktu lokal WIB sebagai fallback");
+			
+			//document.getElementById("jamdigital").innerText = "Gagal memuat waktu";
+			//document.getElementById("date").innerText = "";
 		}
 	}
 
@@ -454,7 +476,11 @@
 		};
 	}
 
-	fetchServerTime();
+	window.onload = async function() {
+		await fetchServerTime();
+	};
+
+	//fetchServerTime();
 	setInterval(updateClock, 1000);
 	
 	var urlGAS= 'https://script.google.com/macros/s/AKfycbxf2uoEFraGhy-kbRI0bneqD2MUk--FSLf_piYrLafS8pG0xdbf0E-vSRmpXcM424vSAw/exec';
