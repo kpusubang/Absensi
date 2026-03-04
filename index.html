@@ -1181,11 +1181,7 @@
 			).done(function(presensiRes, uraianRes){
 
     			let response = presensiRes[0];
-
-				let dataUraian = {};
-				if (uraianRes[0] && uraianRes[0].status === "success") {
-    				dataUraian = uraianRes[0].data || {};
-				}
+    			let dataUraian = uraianRes[0] || {};
 
     			let tbody = document.getElementById("tabelRekapBody");
     			tbody.innerHTML = "";
@@ -1195,7 +1191,6 @@
 				let lastDay = new Date(year, month, 0).getDate();
 
 				console.log(dataUraian);
-				console.log("DATA URAIAN:", dataUraian);
 
 				for (let day = 1; day <= lastDay; day++) {
 
