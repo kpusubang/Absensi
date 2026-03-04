@@ -935,7 +935,7 @@
     	const menitSekarang = timeToMinutes(jamSekarang);
 
     	const batasAwal  = "06:00";
-    	const batasAkhir = "15:00";
+    	const batasAkhir = "10:00";
 
     	const jamMasukSebelumnya = $("#jamMasuk").text();
 
@@ -1027,7 +1027,7 @@
             	jamPulangMinimal = timeToMinutes("15:30");
         	} else {
             	// Senin–Kamis Ramadhan
-            	jamPulangMinimal = timeToMinutes("10:00");
+            	jamPulangMinimal = timeToMinutes("15:00");
         	}
 
         	tambahKeterlambatan = false; // ❌ TIDAK ADA TAMBAHAN JAM
@@ -1041,7 +1041,7 @@
         	if (hari === 5) {
             	jamPulangMinimal = timeToMinutes("16:30"); // Jumat
         	} else {
-            	jamPulangMinimal = timeToMinutes("10:00"); // Senin–Kamis
+            	jamPulangMinimal = timeToMinutes("16:00"); // Senin–Kamis
         	}
 
         	tambahKeterlambatan = true; // ✅ ADA TAMBAHAN JAM
@@ -1221,10 +1221,12 @@
 						col1.classList.add("tengah");
 
 						let col2 = document.createElement("td");
+						col2.id = `m-${day}`;
 						col2.textContent = masukVal;
 						col2.classList.add("tengah");
 
 						let col3 = document.createElement("td");
+						col3.id = `p-${day}`;
 						col3.textContent = pulangVal;
 						col3.classList.add("tengah");
 
