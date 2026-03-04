@@ -1181,7 +1181,11 @@
 			).done(function(presensiRes, uraianRes){
 
     			let response = presensiRes[0];
-    			let dataUraian = uraianRes[0] || {};
+
+				let dataUraian = {};
+				if (uraianRes[0] && uraianRes[0].status === "success") {
+    				dataUraian = uraianRes[0].data || {};
+				}
 
     			let tbody = document.getElementById("tabelRekapBody");
     			tbody.innerHTML = "";
