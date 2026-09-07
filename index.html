@@ -208,6 +208,7 @@
 									<th>Pulang</th>
 									<th style="width:35%">Uraian Kegiatan</th>
 									<th>Keterangan</th>
+                                    <th>Aksi</th>
 								</tr>
 							</thead>
 							<tbody id="tabelRekapBody">
@@ -313,6 +314,20 @@
         </button>
       </div>
 
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL EDIT ABSENSI TERLEWAT -->
+<div class="modal fade" id="modalAbsensiTerlewat" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit Absensi Terlewat</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="formAbsensiTerlewat"></div>
     </div>
   </div>
 </div>
@@ -1161,160 +1176,586 @@
 	}
 
 	function rekapbulan()
-	{
-		if($('#pilihBulan').val()){
-			Swal.fire({
-				title: 'Absensi',
-				text: 'Memuat Rekap...',
-				allowOutsideClick: false,
-				didOpen: () => {
-					Swal.showLoading();
-				}
-		});
-			
-		okbln = $('#pilihBulan').val();
-		okthn = localStorage.getItem('tahun');
-			
-		$.when(
-    		$.getJSON(urlGAS + "?mode=loadpresensi&bulan="+okbln+"&baris="+localStorage.getItem('baris')),
-    		$.getJSON(urlGAS + "?mode=geturaian&bulan="+okbln+"&nip="+localStorage.getItem('nip'))
-			).done(function(presensiRes, uraianRes){
+{
+    const okbln = $('#pilihBulan').val();
+    const okthn = Number(localStorage.getItem('tahun'));
+    const nip = localStorage.getItem('nip');
+    const baris = localStorage.getItem('baris');
 
-    			let response = presensiRes[0];
-    			let dataUraian = uraianRes[0] || {};
+    if(!okbln){
+        Swal.fire({icon:'error', title:'Error', text:'Pilih bulan terlebih dahulu!'});
+        return;
+    }
 
-    			let tbody = document.getElementById("tabelRekapBody");
-    			tbody.innerHTML = "";
+    if(!okthn || !nip || !baris){
+        Swal.fire({icon:'error', title:'Error', text:'Data pengguna/tahun belum lengkap. Silakan login kembali.'});
+        return;
+    }
 
-				let year = okthn;
-				let month = angkabulan(okbln);
-				let lastDay = new Date(year, month, 0).getDate();
+    Swal.fire({
+        title:'Rekap',
+        text:'Memuat Rekap...',
+        allowOutsideClick:false,
+        didOpen:()=>Swal.showLoading()
+    });
 
-				console.log(dataUraian);
+    // SATU SUMBER DATA UNTUK REKAP:
+    // Server membaca langsung kolom Masuk/Pulang pada sheet bulan
+    // dan menentukan tanggal yang masih boleh diedit.
+    $.getJSON(urlGAS, {
+        mode:'getrekapbulan',
+        bulan:okbln,
+        tahun:okthn,
+        nip:nip,
+        baris:baris
+    }, function(res){
+        if(!res || res.status !== 'success'){
+            Swal.fire('Error', res && res.message ? res.message : 'Gagal memuat rekap.', 'error');
+            return;
+        }
 
-				for (let day = 1; day <= lastDay; day++) {
+        const tbody = document.getElementById('tabelRekapBody');
+        tbody.innerHTML = '';
 
-					let dateObj = new Date(year, month - 1, day);
-					let hari = dateObj.toLocaleDateString("id-ID", { weekday: 'long' });
-					let hariIndex = dateObj.getDay();
-					let isoDate = dateObj.toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
+        (res.data || []).forEach(function(d){
+            const row = document.createElement('tr');
 
-					let row = document.createElement("tr");
+            const col1 = document.createElement('td');
+            col1.className = 'tengah';
+            col1.innerHTML = escapeHtml(d.hari) + '<br/>' + escapeHtml(d.tanggalTampil);
 
-					let day2 = String(day).padStart(2, '0');
-					let omM = (day - 1) * 2 + 4;  
-					let omP = omM + 1;
+            const col2 = document.createElement('td');
+            col2.className = 'tengah';
+            col2.id = 'm-' + d.day;
+            col2.textContent = d.jamMasuk || '';
 
-					let kolomM = `Kolom${omM}`;
-					let kolomP = `Kolom${omP}`;
+            const col3 = document.createElement('td');
+            col3.className = 'tengah';
+            col3.id = 'p-' + d.day;
+            col3.textContent = d.jamPulang || '';
 
-					let masukVal = response[okbln][kolomM] || "";
-					let pulangVal = response[okbln][kolomP] || "";
+            const col4 = document.createElement('td');
+            col4.style.textAlign = 'left';
+            col4.innerHTML = d.uraian ? escapeHtml(d.uraian) : '';
 
-					let uraianVal = dataUraian[day] || "";
+            const col5 = document.createElement('td');
+            col5.className = 'tengah';
+            col5.id = 'ket-' + d.day;
+            col5.innerHTML = d.keterangan
+                ? escapeHtml(d.keterangan)
+                : '';
 
-					// =========================
-					// Buat Kolom
-					// =========================
-					let col1 = document.createElement("td");
-					col1.innerHTML = hari+'<br/>'+day2+'-'+month+'-'+year;
-					col1.classList.add("tengah");
+            const col6 = document.createElement('td');
+            col6.className = 'tengah';
 
-					let col2 = document.createElement("td");
-					col2.id = `m-${day}`;
-					col2.textContent = masukVal;
-					col2.classList.add("tengah");
+            // Tombol Edit ditentukan SERVER berdasarkan data absensi bulan.
+            if(d.bisaEdit){
+                col6.innerHTML =
+                    '<button type="button" class="btn btn-warning btn-sm" ' +
+                    'onclick="editAbsensiTerlewat(\'' + d.tanggal + '\')">' +
+                    '<i class="bi bi-pencil-square"></i> Edit</button>';
+                row.style.backgroundColor = '#fff3cd';
 
-					let col3 = document.createElement("td");
-					col3.id = `p-${day}`;
-					col3.textContent = pulangVal;
-					col3.classList.add("tengah");
+                if(!d.jamMasuk && !d.jamPulang){
+                    col5.innerHTML = '<span style="color:#b26a00;font-weight:bold">Belum Absen Masuk & Pulang</span>';
+                }else if(!d.jamMasuk){
+                    col5.innerHTML = '<span style="color:#b26a00;font-weight:bold">Belum Absen Masuk</span>';
+                }else if(!d.jamPulang){
+                    col5.innerHTML = '<span style="color:#b26a00;font-weight:bold">Belum Absen Pulang</span>';
+                }
+            }
 
-					let col4 = document.createElement("td");
-					col4.innerHTML = uraianVal ? 
-						`<div style="text-align:left">${uraianVal}</div>` : "";
-					col4.style.textAlign = "left";
+            if(d.libur){
+                row.style.backgroundColor = '#ffe6e6';
+                col6.innerHTML = '';
+                col5.innerHTML = '<span style="color:red">' + escapeHtml(d.keterangan) + '</span>';
+            }
 
-					let col5 = document.createElement("td");
-					col5.id=`ket-${day}`;
-					col5.textContent = "";
-					col5.classList.add("tengah");
+            row.append(col1,col2,col3,col4,col5,col6);
+            tbody.appendChild(row);
+        });
+
+        // Tambahkan informasi jam kerja/telat seperti rekap lama.
+        let jamKerjaOK = sessionStorage.getItem('jamKerja'+okbln) || '';
+        let jamKerjaBulanIni = jamKerjaOK.split(';');
+
+        (res.data || []).forEach(function(d){
+            const mElement = document.getElementById('m-'+d.day);
+            const pElement = document.getElementById('p-'+d.day);
+
+            if(mElement && jamKerjaBulanIni[(d.day-1)*2]){
+                let pM = mElement.textContent.trim();
+                if(pM){
+                    let brp = timeToMinutes(pM) - timeToMinutes(jamKerjaBulanIni[(d.day-1)*2]);
+                    $('#ket-'+d.day).append(
+                        brp > 0
+                        ? '<div style="color:red">Datang Telat '+brp+' Menit</div>'
+                        : '<div style="color:green">Datang Sesuai</div>'
+                    );
+                }
+            }
+
+            if(pElement && jamKerjaBulanIni[(d.day-1)*2+1]){
+                let pP = pElement.textContent.trim();
+                if(pP){
+                    let brp = timeToMinutes(jamKerjaBulanIni[(d.day-1)*2+1]) - timeToMinutes(pP);
+                    $('#ket-'+d.day).append(
+                        brp > 0
+                        ? '<div style="color:red">Pulang Cepat '+brp+' Menit</div>'
+                        : '<div style="color:green">Pulang Sesuai</div>'
+                    );
+                }
+            }
+        });
+
+        $('#divTabelRekap').show();
+        Swal.close();
+    }).fail(function(xhr){
+        console.error(xhr);
+        Swal.fire('Error','Gagal menghubungi server untuk memuat rekap.','error');
+    });
+}
+
+function escapeHtml(value){
+    return String(value||'').replace(/[&<>\"']/g,function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c];
+    });
+}
+
+// ============================================================
+// FORMAT INPUT JAM 24 JAM
+// Tidak menggunakan AM/PM
+// Contoh:
+// 0730  -> 07:30
+// 1630  -> 16:30
+// 2345  -> 23:45
+// ============================================================
+function formatJam24Input(el) {
+    let value = String(el.value || '')
+        .replace(/\D/g, '')
+        .substring(0, 4);
+
+    if (value.length >= 3) {
+        value = value.substring(0, 2) + ':' + value.substring(2);
+    }
+
+    el.value = value;
+}
 
 
-					// =========================
-					// CEK LIBUR
-					// =========================
-					let keteranganLibur = "";
+// Validasi HH:mm
+function validasiJam24(jam) {
+    return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(jam || ''));
+}
 
-					if (hariIndex === 0) keteranganLibur = "Libur Minggu";
-					if (hariIndex === 6) keteranganLibur = "Libur Sabtu";
+function editAbsensiTerlewat(tanggal){
+    $.getJSON(urlGAS, {
+        mode:'getabsensiterlewat',
+        nip:localStorage.getItem('nip'),
+        tanggal:tanggal,
+        tahun:localStorage.getItem('tahun'),
+        bulan:$('#pilihBulan').val(),
+        baris:localStorage.getItem('baris')
+    }, function(res){
+        if(!res || res.status!=='success' || !res.data){
+            Swal.fire('Tidak dapat diedit',
+                res && res.message ? res.message :
+                'Tanggal tersebut sudah tidak memenuhi syarat atau absensi sudah lengkap.',
+                'warning');
+            return;
+        }
 
-					let liburNasional = dataLibur.find(l => l.tanggal === isoDate);
-					if (liburNasional) keteranganLibur = liburNasional.ket;
+        const d=res.data;
+        const masukLocked=!!d.jamMasuk;
+        const pulangLocked=!!d.jamPulang;
 
-					if (keteranganLibur !== "") {
-						row.style.backgroundColor = "#ffe6e6";
-						col5.innerHTML = `<span style="color:red">${keteranganLibur}</span>`;
-					}
+        Swal.fire({
+            title:'Edit Absensi Terlewat',
+            width:650,
+            html:
+                //'<div style="text-align:left">'+
+                //'<div class="mb-2"><label class="form-label"><b>Tanggal Absensi</b></label>'+
+                //'<input id="swalTanggal" class="form-control" type="date" value="'+escapeHtml(d.tanggal||'')+'" readonly></div>'+
+                //'<div class="mb-2"><label class="form-label">Jam Masuk <small class="text-muted">(24 jam / WIB)</small></label>'+
+                //'<input id="swalJamMasuk" class="form-control" type="time" value="'+escapeHtml(d.jamMasuk||'')+'" '+(masukLocked?'disabled':'')+'></div>'+
+                //'<div class="mb-2"><label class="form-label">Jam Pulang <small class="text-muted">(24 jam / WIB)</small></label>'+
+                //'<input id="swalJamPulang" class="form-control" type="time" value="'+escapeHtml(d.jamPulang||'')+'" '+(pulangLocked?'disabled':'')+'></div>'+
+                //'<div class="mb-2"><label class="form-label">Uraian Kegiatan</label>'+
+                //'<textarea id="swalUraian" class="form-control" rows="3" placeholder="Wajib jika mengisi jam pulang">'+escapeHtml(d.uraian||'')+'</textarea></div>'+
+                //'<div class="mb-2"><label class="form-label">Alasan Absensi Terlewat <span style="color:red">*</span></label>'+
+                //'<textarea id="swalAlasan" class="form-control" rows="3" placeholder="Jelaskan alasan absensi terlewat..."></textarea></div>'+
+                //'<div class="alert alert-warning py-2"><small>'+
+                //'Data dicatat dengan keterangan <b>ABSENSI TERLEWAT</b>. '+
+                //'Jam yang sudah tersimpan tidak dapat ditimpa.</small></div></div>',
 
-					row.appendChild(col1);
-					row.appendChild(col2);
-					row.appendChild(col3);
-					row.appendChild(col4);
-					row.appendChild(col5);
+				'<div style="text-align:left">'+
+                '<div class="mb-2"><label class="form-label"><b>Tanggal Absensi</b></label>'+
+                '<input id="swalTanggal" class="form-control" type="date" value="'+escapeHtml(d.tanggal||'')+'" readonly></div>'+
+                '<div class="mb-2">'+
+				'<label class="form-label">Jam Masuk <small class="text-muted">(24 jam / WIB)</small></label>'+
+				'<input id="swalJamMasuk" class="form-control" type="text" '+
+				'inputmode="numeric" maxlength="5" autocomplete="off" '+
+				'placeholder="HH:mm" value="'+escapeHtml(d.jamMasuk||'')+'" '+
+				(masukLocked?'disabled':'')+
+				' oninput="formatJam24Input(this)">'+
+				'</div>'+
 
-					tbody.appendChild(row);
-				}
+				'<div class="mb-2">'+
+				'<label class="form-label">Jam Pulang <small class="text-muted">(24 jam / WIB)</small></label>'+
+				'<input id="swalJamPulang" class="form-control" type="text" '+
+				'inputmode="numeric" maxlength="5" autocomplete="off" '+
+				'placeholder="HH:mm" value="'+escapeHtml(d.jamPulang||'')+'" '+
+				(pulangLocked?'disabled':'')+
+				' oninput="formatJam24Input(this)">'+
+				'</div>'+
+                '<div class="mb-2"><label class="form-label">Uraian Kegiatan</label>'+
+                '<textarea id="swalUraian" class="form-control" rows="3" placeholder="Wajib jika mengisi jam pulang">'+escapeHtml(d.uraian||'')+'</textarea></div>'+
+                '<div class="mb-2"><label class="form-label">Alasan Absensi Terlewat <span style="color:red">*</span></label>'+
+                '<textarea id="swalAlasan" class="form-control" rows="3" placeholder="Jelaskan alasan absensi terlewat..."></textarea></div>'+
+                '<div class="alert alert-warning py-2"><small>'+
+                'Data dicatat dengan keterangan <b>ABSENSI TERLEWAT</b>. '+
+                'Jam yang sudah tersimpan tidak dapat ditimpa.</small></div></div>',
+            showCancelButton:true,
+            confirmButtonText:'Simpan Absensi',
+            cancelButtonText:'Batal',
+            preConfirm:()=>{
 
-				// hitung jam kerja
-				jamKerjaOK = sessionStorage.getItem('jamKerja'+okbln);
-				jamKerjaBulanIni = jamKerjaOK.split(';');
-					
-				//console.log(jamKerjaBulanIni);
-				for (let i = 0; i < lastDay; i++) {
-					let idx = i + 1;
-					let mElement = document.getElementById(`m-${idx}`);
-					let pElement = document.getElementById(`p-${idx}`);
+    const jm =
+        document
+            .getElementById('swalJamMasuk')
+            .value
+            .trim();
 
-					if (mElement) {
-						let pM = mElement.textContent.trim();
-						//console.log(i+" "+pM);
-						//console.log(i+" jk "+jamKerjaBulanIni[i * 2]);
-						if(pM.length > 0){
-							if(timeToMinutes(pM) > timeToMinutes(jamKerjaBulanIni[i * 2])){
-								brp = timeToMinutes(pM) - timeToMinutes(jamKerjaBulanIni[i * 2]);
-								$("#ket-"+idx).append('<div style="color:red">Datang Telat '+brp+' Menit</div>');
-							}else{
-								$("#ket-"+idx).append('<div style="color:green">Datang Sesuai</div>');
-							}
-						}
-					}
-					if (pElement) {
-						pP = pElement.textContent.trim();
-						//console.log(i+" "+pP);
-						//console.log(i+" jk "+jamKerjaBulanIni[i * 2 + 1]);
-						if(pP.length > 0){
-							if(timeToMinutes(pP) < timeToMinutes(jamKerjaBulanIni[i * 2 + 1])){
-								brp = timeToMinutes(jamKerjaBulanIni[i * 2 + 1]) - timeToMinutes(pP);
-								$("#ket-"+idx).append('<div style="color:red">Pulang Cepat '+brp+' Menit</div>');
-							}else{
-								$("#ket-"+idx).append('<div style="color:green">Pulang Sesuai</div>');
-							}
-						}
-					}
-				}
-				Swal.close();
-				$('#divTabelRekap').show();
-			});
+    const jp =
+        document
+            .getElementById('swalJamPulang')
+            .value
+            .trim();
 
-		}else{
-			Swal.fire({
-				icon: 'error',
-				title: 'Error',
-				text: 'Pilih bulan terlebih dahulu!'
-			});
-		}
-	}
+    const ur =
+        document
+            .getElementById('swalUraian')
+            .value
+            .trim();
+
+    const al =
+        document
+            .getElementById('swalAlasan')
+            .value
+            .trim();
+
+
+    // =====================================================
+    // MINIMAL SATU JAM
+    // =====================================================
+
+    if(!jm && !jp){
+
+        return Swal.showValidationMessage(
+            'Isi minimal jam masuk atau jam pulang yang masih kosong.'
+        );
+
+    }
+
+
+    // =====================================================
+    // FORMAT JAM MASUK
+    // =====================================================
+
+    if(jm && !validasiJam24(jm)){
+
+        return Swal.showValidationMessage(
+            'Jam masuk harus menggunakan format HH:mm. Contoh: 07:30'
+        );
+
+    }
+
+
+    // =====================================================
+    // FORMAT JAM PULANG
+    // =====================================================
+
+    if(jp && !validasiJam24(jp)){
+
+        return Swal.showValidationMessage(
+            'Jam pulang harus menggunakan format HH:mm. Contoh: 16:30'
+        );
+
+    }
+
+
+    // =====================================================
+    // HITUNG ATURAN JAM PULANG
+    // =====================================================
+
+    // Gunakan jam masuk yang baru diisi
+    // atau jam masuk yang sebelumnya sudah tersimpan
+    const jamMasukValidasi =
+        jm ||
+        d.jamMasuk;
+
+
+    if(jamMasukValidasi){
+
+        const aturan =
+            hitungPulangMinimalClient(
+                d.tanggal,
+                jamMasukValidasi
+            );
+
+
+        if(aturan && aturan.error){
+
+            return Swal.showValidationMessage(
+                aturan.error
+            );
+
+        }
+
+
+        // ===============================================
+        // VALIDASI JAM PULANG
+        // ===============================================
+
+        if(jp && aturan){
+
+            const pulangMenit =
+                jamKeMenit(jp);
+
+
+            if(
+                pulangMenit <
+                aturan.minimal
+            ){
+
+                return Swal.showValidationMessage(
+                    'Jam masuk ' +
+                    jamMasukValidasi +
+                    ' WIB. Jam pulang minimal adalah ' +
+                    aturan.jamMinimal +
+                    ' WIB.'
+                );
+
+            }
+
+        }
+
+    }
+
+
+    // =====================================================
+    // URAIAN
+    // =====================================================
+
+    if(jp && ur.length < 5){
+
+        return Swal.showValidationMessage(
+            'Jika mengisi jam pulang, uraian kegiatan wajib diisi.'
+        );
+
+    }
+
+
+    // =====================================================
+    // ALASAN
+    // =====================================================
+
+    if(al.length < 5){
+
+        return Swal.showValidationMessage(
+            'Alasan absensi terlewat wajib diisi.'
+        );
+
+    }
+
+
+    return {
+
+        jamMasuk:
+            masukLocked
+                ? ''
+                : jm,
+
+        jamPulang:
+            pulangLocked
+                ? ''
+                : jp,
+
+        uraian:ur,
+
+        alasan:al
+
+    };
+
+}
+        }).then(function(r){
+            if(r.isConfirmed) simpanAbsensiTerlewat(tanggal,r.value);
+        });
+    }).fail(function(){
+        Swal.fire('Error','Gagal memuat data tanggal yang akan diedit.','error');
+    });
+}
+
+// ============================================================
+// KONVERSI HH:mm KE MENIT
+// ============================================================
+
+function jamKeMenit(jam) {
+
+    if (!jam || !/^\d{2}:\d{2}$/.test(jam)) {
+        return null;
+    }
+
+    const [h, m] = jam.split(':').map(Number);
+
+    return (h * 60) + m;
+}
+
+
+// ============================================================
+// KONVERSI MENIT KE HH:mm
+// ============================================================
+
+function menitKeJam(totalMenit) {
+
+    const h =
+        Math.floor(totalMenit / 60);
+
+    const m =
+        totalMenit % 60;
+
+    return (
+        String(h).padStart(2, '0') +
+        ':' +
+        String(m).padStart(2, '0')
+    );
+}
+
+
+// ============================================================
+// HITUNG JAM PULANG MINIMAL ABSENSI TERLEWAT
+// ============================================================
+
+function hitungPulangMinimalClient(tanggal, jamMasuk) {
+
+    const masuk =
+        jamKeMenit(jamMasuk);
+
+    if (masuk === null) {
+        return null;
+    }
+
+
+    // Batas masuk
+    const mulaiMasuk = 6 * 60;
+    const maksimalMasuk = (8 * 60) + 30;
+
+    if (
+        masuk < mulaiMasuk ||
+        masuk > maksimalMasuk
+    ) {
+        return {
+            error:
+                'Jam masuk hanya dapat diisi pukul 06:00 - 08:30 WIB.'
+        };
+    }
+
+
+    // Batas keterlambatan
+    const batasNormal =
+        (7 * 60) + 30;
+
+
+    // Buat tanggal lokal
+    const date =
+        new Date(
+            tanggal +
+            'T12:00:00'
+        );
+
+
+    const hari =
+        date.getDay();
+
+
+    // Jumat
+    const jamDasar =
+        hari === 5
+            ? (16 * 60) + 30
+            : (16 * 60);
+
+
+    // Hitung keterlambatan
+    const keterlambatan =
+        masuk > batasNormal
+            ? masuk - batasNormal
+            : 0;
+
+
+    const minimal =
+        jamDasar +
+        keterlambatan;
+
+
+    return {
+
+        minimal: minimal,
+
+        jamMinimal:
+            menitKeJam(minimal),
+
+        keterlambatan:
+            keterlambatan
+
+    };
+
+}
+
+function simpanAbsensiTerlewat(tanggal,data){
+    Swal.fire({
+        title:'Menyimpan...',
+        text:'Memvalidasi absensi di server',
+        allowOutsideClick:false,
+        didOpen:()=>Swal.showLoading()
+    });
+
+    $.ajax({
+        url:urlGAS,
+        method:'GET',
+        dataType:'json',
+        data:{
+            mode:'simpanabsensiterlewat',
+            tanggal: tanggal,
+            nip:localStorage.getItem('nip'),
+            nama:localStorage.getItem('nama'),
+            baris:localStorage.getItem('baris'),
+            tahun:localStorage.getItem('tahun'),
+            bulan:$('#pilihBulan').val(),
+            jamMasuk:data.jamMasuk||'',
+            jamPulang:data.jamPulang||'',
+            uraian:data.uraian||'',
+            alasan:data.alasan||''
+        },
+        success:function(res){
+            if(res && res.status==='success'){
+                Swal.fire(
+                    'Berhasil',
+                    'Absensi tanggal '+tanggal+' berhasil disimpan sebagai ABSENSI TERLEWAT.',
+                    'success'
+                ).then(()=>rekapbulan());
+            }else{
+                Swal.fire(
+                    'Tidak dapat menyimpan',
+                    res && res.message ? res.message : 'Data ditolak server.',
+                    'error'
+                );
+            }
+        },
+        error:function(){
+            Swal.fire('Error','Gagal mengirim data ke server.','error');
+        }
+    });
+}
 
 	function angkabulan(month) 
 	{
