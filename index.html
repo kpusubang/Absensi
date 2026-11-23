@@ -1415,8 +1415,8 @@ function tampilkanFormAbsensiTerlewat(d){
         '</div>'+
         '<div class="mb-2"><label class="form-label">Uraian Kegiatan</label>'+
         '<textarea id="editUraian" class="form-control" rows="3" placeholder="Uraian kegiatan wajib diisi">'+escapeHtml(d.uraian||'')+'</textarea></div>'+
-        '<div class="mb-2"><label class="form-label">Alasan Absensi Terlewat <span style="color:red">*</span></label>'+
-        '<textarea id="editAlasan" class="form-control" rows="3" placeholder="Jelaskan alasan absensi terlewat..."></textarea></div>'+
+        //'<div class="mb-2"><label class="form-label">Alasan Absensi Terlewat <span style="color:red">*</span></label>'+
+        //'<textarea id="editAlasan" class="form-control" rows="3" placeholder="Jelaskan alasan absensi terlewat..."></textarea></div>'+
         '<div class="alert alert-warning py-2 mb-0"><small>Jam yang sudah tersimpan tidak dapat ditimpa.</small></div>'+
         '</div>';
 
@@ -1474,7 +1474,8 @@ function prosesSimpanAbsensiTerlewat(){
     const jm = ($('#editJamMasuk').val() || '').trim();
     const jp = ($('#editJamPulang').val() || '').trim();
     const ur = ($('#editUraian').val() || '').trim();
-    const al = ($('#editAlasan').val() || '').trim();
+    //const al = ($('#editAlasan').val() || '').trim();
+	const al = 'Absensi terlewat';
 
     if(!jm && !jp){
         Swal.fire('Validasi','Isi minimal jam masuk atau jam pulang yang masih kosong.','warning');
@@ -1516,16 +1517,17 @@ function prosesSimpanAbsensiTerlewat(){
         return;
     }
 
-    if(al.length < 5){
-        Swal.fire('Validasi','Alasan absensi terlewat wajib diisi.','warning');
-        return;
-    }
+    //if(al.length < 5){
+        //Swal.fire('Validasi','Alasan absensi terlewat wajib diisi.','warning');
+       // return;
+    //}
 
     const data = {
         jamMasuk: masukLockedForData(d,jm),
         jamPulang: pulangLockedForData(d,jp),
         uraian: ur,
-        alasan: al
+        //alasan: al
+		alasan: 'Absensi terlewat'
     };
 
     bootstrap.Modal.getInstance(document.getElementById('modalAbsensiTerlewat')).hide();
@@ -1678,7 +1680,8 @@ function simpanAbsensiTerlewat(tanggal,data){
             jamMasuk:data.jamMasuk||'',
             jamPulang:data.jamPulang||'',
             uraian:data.uraian||'',
-            alasan:data.alasan||''
+            //alasan:data.alasan||''
+			alasan:'Absensi terlewat'
         },
         success:function(res){
             if(res && res.status==='success'){
